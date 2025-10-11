@@ -20,7 +20,6 @@ class SpriteSheet:
         """从精灵表中提取指定位置的精灵"""
         if not self.sheet:
             return None
-
         # 创建新的表面
         sprite = pygame.Surface((width, height), pygame.SRCALPHA)
         # 从精灵表中复制指定区域
@@ -31,6 +30,10 @@ class SpriteSheet:
 
 class Map:
     def __init__(self):
+        self.tile_size=32
+        self.collision_map = None
+        self.visual_map = None
+        self.floor_tiles = {}
         # 创建精灵表对象
         sprite_sheet = SpriteSheet(os.path.join("..","assets", "sprites", "background", "map_base", "obj.png"))
         # 提取不同元素
@@ -43,6 +46,15 @@ class Map:
         # 水 (32,32) - 32x32
         self.water = sprite_sheet.get_sprite(32, 32, 32, 32)
 
+    def set_collision_map(self, collision_data):
+        """设置碰撞层"""
+        self.collision_map = collision_data
+
+    def set_visual_map(self, visual_data):
+        """设置表现层"""
+        self.visual_map = visual_data
+
+
     def draw_tile(self, window, tile_type, x, y):
         """绘制指定类型的瓷砖"""
         if tile_type == "grass":
@@ -54,5 +66,19 @@ class Map:
         elif tile_type == "water":
             window.blit(self.water, (x, y))
 
+    def draw_floor(self, window):
+        cols = WINDOW_WIDTH // self.tile_size + 1
+        rows = WINDOW_HEIGHT // self.tile_size + 1
+        for y in range(rows):
+            for x in range(cols):
+                window.blit(self.grass, (x * self.tile_size, y * self.tile_size))
 
-
+    def draw_visual_layer(self, window):
+        """绘制表现层"""
+        if not self.visual_map:
+            return
+        for y in range(len(self.visual_map)):
+            for x in range(len(self.visual_map[y])):
+                tile_type = self.visual_map[y][x]
+                if tile_type in self.floor_tiles:
+                    window.blit(self.floor_tiles[tile_type], (x * self.tile_size, y * self.tile_size))
