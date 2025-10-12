@@ -33,7 +33,9 @@ class Map:
         self.tile_size=32
         self.collision_map = None
         self.visual_map = None
-        self.floor_tiles = {}
+        self.block_tiles = {"house"}
+        self.object_feet_y = {}  # 存储每个物件的锚点y坐标
+
         # 创建精灵表对象
         sprite_sheet = SpriteSheet(os.path.join("..","assets", "sprites", "background", "map_base", "obj.png"))
         # 提取不同元素
@@ -54,16 +56,15 @@ class Map:
         """设置表现层"""
         self.visual_map = visual_data
 
-
-    def draw_tile(self, window, tile_type, x, y):
-        """绘制指定类型的瓷砖"""
-        if tile_type == "grass":
+    def draw_tile(self, window, tile_name, x, y):
+        """绘制指定类型的瓷砖,在指定的坐标（x，y）"""
+        if tile_name == "grass":
             window.blit(self.grass, (x, y))
-        elif tile_type == "tree":
+        elif tile_name == "tree":
             window.blit(self.tree, (x, y))
-        elif tile_type == "house":
+        elif tile_name == "house":
             window.blit(self.house, (x, y))
-        elif tile_type == "water":
+        elif tile_name == "water":
             window.blit(self.water, (x, y))
 
     def draw_floor(self, window):
@@ -79,6 +80,6 @@ class Map:
             return
         for y in range(len(self.visual_map)):
             for x in range(len(self.visual_map[y])):
-                tile_type = self.visual_map[y][x]
-                if tile_type in self.floor_tiles:
-                    window.blit(self.floor_tiles[tile_type], (x * self.tile_size, y * self.tile_size))
+                tile_name = self.visual_map[y][x]
+                if tile_name in self.block_tiles:
+                    self.draw_tile(window,tile_name, x * self.tile_size, y * self.tile_size)

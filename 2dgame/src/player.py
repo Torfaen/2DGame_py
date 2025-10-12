@@ -17,6 +17,7 @@ class Player():
         self.bomb_power = 1
         self.status = "free"
         self.alive = True
+        self.feet_y = self.y + 64  # 锚点y坐标
 
         # 扩展属性
         self.bombs_active = []
@@ -39,7 +40,7 @@ class Player():
                 image_path = os.path.join(base_path, f"{direction}.png")
                 if os.path.exists(image_path):
                     self.images[direction] = pygame.image.load(image_path)
-                    self.images[direction] = pygame.transform.scale(self.images[direction], (50, 50))
+                    #self.images[direction] = pygame.transform.scale(self.images[direction], (50, 50))
                 else:
                     print(f"警告：找不到图片 {image_path}")
         except pygame.error as e:
