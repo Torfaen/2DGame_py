@@ -1,8 +1,14 @@
 {
-  "visual_map1": [
-    ["house", "house", "house", "house"],
-    ["house", "empty", "empty", "house"],
-    ["house", "empty", "empty", "house"],
-    ["house", "house", "house", "house"]
+   "map1": [
+    [0, 0, 0, 0],
+    [0, 1, 1, 0],
+    [0, 1, 1, 0],
+    [0, 0, 0, 0]
+  ],
+     "map2": [
+    [0, 0, 0, 0],
+    [0, 1, 1, 0],
+    [0, 1, 1, 0],
+    [0, 0, 0, 0]
   ]
 }

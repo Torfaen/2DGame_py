@@ -1,8 +1,14 @@
 {
-   "collision_map": [
-    [0, 0, 0, 0],
-    [0, 1, 1, 0],
-    [0, 1, 1, 0],
-    [0, 0, 0, 0]
+  "map1": [
+    ["house", "house", "house", "house"],
+    ["house", "empty", "empty", "house"],
+    ["house", "empty", "empty", "house"],
+    ["house", "house", "house", "house"]
+  ],
+    "map2": [
+    ["house", "house", "house", "house"],
+    ["house", "empty", "empty", "house"],
+    ["house", "empty", "empty", "house"],
+    ["house", "house", "house", "house"]
   ]
 }

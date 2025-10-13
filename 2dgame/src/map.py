@@ -32,6 +32,7 @@ class Map:
     def __init__(self):
         self.tile_size=32
         self.collision_map = None
+        self.floor_map= None
         self.visual_map = None
         self.block_tiles = {"house"}
         self.object_feet_y = {}  # 存储每个物件的锚点y坐标
@@ -48,9 +49,14 @@ class Map:
         # 水 (32,32) - 32x32
         self.water = sprite_sheet.get_sprite(32, 32, 32, 32)
 
+
     def set_collision_map(self, collision_data):
         """设置碰撞层"""
         self.collision_map = collision_data
+
+    def set_floor_map(self, floor_data):
+        """设置地板层"""
+        self.floor_map = floor_data
 
     def set_visual_map(self, visual_data):
         """设置表现层"""
