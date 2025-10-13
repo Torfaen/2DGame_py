@@ -19,8 +19,8 @@ class Player():
         self.alive = True
         # 锚点坐标
 
-        self.feet_x = self.x + 2
-        self.feet_y = self.y + 64
+        self.feet_x = x + 2
+        self.feet_y = y + 64
 
         # 扩展属性
         self.bombs_active = []
@@ -71,15 +71,19 @@ class Player():
         key = pygame.key.get_pressed()
         if key[self.controls["left"]]:
             self.x -= self.speed
+            self.feet_x-=self.speed
             self.direction = "left"
         elif key[self.controls["right"]]:
             self.x += self.speed
+            self.feet_x+=self.speed
             self.direction = "right"
         elif key[self.controls["up"]]:
             self.y -= self.speed
+            self.feet_y-=self.speed
             self.direction = "up"
         elif key[self.controls["down"]]:
             self.y += self.speed
+            self.feet_y+=self.speed
             self.direction = "down"
 
     def draw(self, window):
