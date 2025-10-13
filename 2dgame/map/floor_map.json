@@ -1,9 +1,9 @@
 {
    "map1": [
-    [0, 0, 0, 0],
-    [0, 1, 1, 0],
-    [0, 1, 1, 0],
-    [0, 0, 0, 0]
+    ["grass", "grass", "grass", "grass"],
+    ["grass", "grass", "grass", "grass"],
+    ["grass", "grass", "grass", "grass"],
+    ["grass", "grass", "grass", "grass"]
   ],
      "map2": [
     [0, 0, 0, 0],

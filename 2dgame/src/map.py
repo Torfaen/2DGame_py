@@ -74,11 +74,17 @@ class Map:
             window.blit(self.water, (x, y))
 
     def draw_floor(self, window):
-        cols = WINDOW_WIDTH // self.tile_size + 1
-        rows = WINDOW_HEIGHT // self.tile_size + 1
-        for y in range(rows):
-            for x in range(cols):
-                window.blit(self.grass, (x * self.tile_size, y * self.tile_size))
+        """按照JSON中地板配置绘制地板层"""
+        if not self.floor_map:
+            print("没有地板数据")
+            return
+        for y in range(len(self.floor_map)):
+            for x in range(len(self.floor_map[y])):
+                tile_name = self.floor_map[y][x]
+                screen_x = x * self.tile_size
+                screen_y = y * self.tile_size
+                self.draw_tile(window, tile_name, screen_x, screen_y)
+
 
     def draw_visual_layer(self, window):
         """绘制表现层"""

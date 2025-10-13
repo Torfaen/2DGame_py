@@ -55,6 +55,7 @@ def main():
     collision_map=load_map_path(collision_map_path,"map1")
     # 创建地图对象
     map_obj = Map()
+    map_obj.set_floor_map(floor_map)
     map_obj.set_collision_map(collision_map)
     map_obj.set_visual_map(visual_map)
 
