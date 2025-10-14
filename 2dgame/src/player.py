@@ -4,6 +4,7 @@ import os
 
 class Player():
     def __init__(self, id, x, y, controls, color):
+
         self.id = id
         self.x = x
         self.y = y
@@ -17,10 +18,11 @@ class Player():
         self.bomb_power = 1
         self.status = "free"
         self.alive = True
-        # 锚点坐标
+        # 锚点坐标，用于画阴影碰撞框
 
-        self.feet_x = x + 2
-        self.feet_y = y + 64
+        self.feet_x = x+11
+        self.feet_y = y+50
+        # 阴影矩形碰撞框
 
         # 扩展属性
         self.bombs_active = []
@@ -42,19 +44,19 @@ class Player():
         try:
             shadow_path = os.path.join("..", "assets", "sprites", "background", "map_base", "shadow.png")
             self.image_shadow = pygame.image.load(shadow_path)
-            self.image_shadow = pygame.transform.scale(self.image_shadow, (50, 20))  # 按需缩放
+            #self.image_shadow = pygame.transform.scale(self.image_shadow, (50, 20))  # 按需缩放
         except (pygame.error, FileNotFoundError) as e:
             print(f"警告：无法加载阴影图片 ({e})")
             self.image_shadow = None
 
-        #加载玩家贴图
+        #加载玩家贴图,后续版本改为传参形式选角色
         try:
             base_path = os.path.join("..", "assets", "sprites", "player", "player1_sprite")
             for direction in self.images.keys():
                 image_path = os.path.join(base_path, f"{direction}.png")
                 if os.path.exists(image_path):
                     self.images[direction] = pygame.image.load(image_path)
-                    #self.images[direction] = pygame.transform.scale(self.images[direction], (50, 50))
+                    self.images[direction] = pygame.transform.scale(self.images[direction], (54, 61))
                 else:
                     print(f"警告：找不到图片 {image_path}")
         except pygame.error as e:
