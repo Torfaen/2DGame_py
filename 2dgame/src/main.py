@@ -69,12 +69,26 @@ def main():
         "left": pygame.K_LEFT,
         "right": pygame.K_RIGHT
     }
+    player2_controls = {
+        "up": pygame.K_w,
+        "down": pygame.K_s,
+        "left": pygame.K_a,
+        "right": pygame.K_d
+    }
 
     player = Player(
         id=1,
         x=400,
         y=300,
         controls=player_controls,
+        #读取贴图错误时使用红方块代替
+        color=(255, 0, 0)  # 红色
+    )
+    player2 = Player(
+        id=2,
+        x=400,
+        y=300,
+        controls=player2_controls,
         #读取贴图错误时使用红方块代替
         color=(255, 0, 0)  # 红色
     )
@@ -89,8 +103,10 @@ def main():
 
         # 获取玩家的 Y 坐标
         player_y = player.y
+        player2_y = player2.y
         # 更新玩家移动
         player.move(0, 0)  # 调用移动方法
+        player2.move(0, 0)
         # 绘制
         window.fill((0, 0, 0))  # 清屏（黑色背景）
         '''
@@ -119,7 +135,7 @@ def main():
 
         # 加入玩家
         drawables.append(("player", player, player.x, player.y, player.y + 64))  # 64是角色高度
-
+        drawables.append(("player", player2, player2.x, player2.y, player2.y + 64))
         # 按 feet_y 排序
         drawables.sort(key=lambda obj: obj[4])
 
