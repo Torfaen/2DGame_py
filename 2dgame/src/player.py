@@ -2,12 +2,15 @@ import pygame
 import os
 
 
-class Player():
+class Player(pygame.sprite.Sprite):
     def __init__(self, id, x, y, controls, color):
-
+        super().__init__()  # 调用父类初始化
         self.id = id
-        self.x = x
-        self.y = y
+        self.image = pygame.Surface((54, 61))  # 或使用实际图像
+        self.image.fill(color)  # 临时填充颜色
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
         self.controls = controls
         self.color = color
         self.direction = "down"
@@ -23,6 +26,7 @@ class Player():
         self.feet_x = x+11
         self.feet_y = y+50
         # 阴影矩形碰撞框
+        self.feet_rect = pygame.Rect(self.feet_x, self.feet_y, 30, 10)
 
         # 扩展属性
         self.bombs_active = []
@@ -72,21 +76,24 @@ class Player():
     def move(self, dx, dy):
         key = pygame.key.get_pressed()
         if key[self.controls["left"]]:
-            self.x -= self.speed
+            self.rect.x -= self.speed
             self.feet_x-=self.speed
             self.direction = "left"
+
         elif key[self.controls["right"]]:
-            self.x += self.speed
+            self.rect.x += self.speed
             self.feet_x+=self.speed
             self.direction = "right"
         elif key[self.controls["up"]]:
-            self.y -= self.speed
+            self.rect.y -= self.speed
             self.feet_y-=self.speed
             self.direction = "up"
         elif key[self.controls["down"]]:
-            self.y += self.speed
+            self.rect.y += self.speed
             self.feet_y+=self.speed
             self.direction = "down"
+        # 同步 feet_rect 位置
+        self.feet_rect.topleft = (self.feet_x, self.feet_y)
 
     def draw(self, window):
         #先渲染阴影
@@ -97,10 +104,17 @@ class Player():
             window.blit(self.image_shadow, (shadow_x, shadow_y))
         # 渲染人物，使人物踩在影子上
         if self.images and self.direction in self.images and self.images[self.direction]:
-            window.blit(self.images[self.direction], (self.x, self.y))
+            window.blit(self.images[self.direction], (self.rect.x, self.rect.y))
         else:
             # 没有贴图，绘制一个矩形代替角色
-            pygame.draw.rect(window, self.color, (self.x, self.y, 50, 50))
+            pygame.draw.rect(window, self.color, (self.rect.x, self.rect.y, 50, 50))
+
+
+    def draw_debug_rect(self, window,DEBUG_MODE):
+        if DEBUG_MODE:
+#            pygame.draw.rect(window, (255, 0, 0), (self.rect.x, self.rect.y, 54, 61), 1)
+            pygame.draw.rect(window, (0, 255, 0), self.feet_rect, 1)
+
 
     def load_sprite(self, width, height):
         # 此方法已废弃，无需使用

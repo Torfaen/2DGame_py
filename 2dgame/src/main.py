@@ -8,6 +8,7 @@ import json
 # 设置窗口，全局参数设置
 WINDOW_WIDTH = 800
 WINDOW_HEIGHT = 600
+DEBUG_MODE=True
 #------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # 地图测试区
 # 定义地图数据
@@ -86,8 +87,8 @@ def main():
     )
     player2 = Player(
         id=2,
-        x=400,
-        y=300,
+        x=200,
+        y=100,
         controls=player2_controls,
         #读取贴图错误时使用红方块代替
         color=(255, 0, 0)  # 红色
@@ -102,11 +103,16 @@ def main():
                 running = False
 
         # 获取玩家的 Y 坐标
-        player_y = player.y
-        player2_y = player2.y
+        player_y = player.rect.y
+        player2_y = player2.rect.y
         # 更新玩家移动
         player.move(0, 0)  # 调用移动方法
         player2.move(0, 0)
+
+        for block in map_obj.collision_rects:
+            if player.feet_rect.colliderect(block)or player2.feet_rect.colliderect(block):
+                print("碰到了障碍物！")
+
         # 绘制
         window.fill((0, 0, 0))  # 清屏（黑色背景）
         '''
@@ -118,6 +124,7 @@ def main():
         player.draw(window)
         '''
         map_obj.draw_floor(window)
+        map_obj.draw_visual_layer(window)
 
         # 把可遮挡的物体（房子）和玩家一起放到一个列表
         drawables = []
@@ -126,16 +133,18 @@ def main():
         for y in range(len(map_obj.visual_map)):
             for x in range(len(map_obj.visual_map[y])):
                 tile_name = map_obj.visual_map[y][x]
-                if tile_name in map_obj.block_tiles:
+#                if tile_name in map_obj.block_tiles:
                     # 获取每个物件的绘制坐标（房子的底部在 tile_y + tile_size）
-                    pos_x = x * map_obj.tile_size
-                    pos_y = y * map_obj.tile_size
-                    feet_y = pos_y + map_obj.tile_size  # 假设 tile 高度=底部锚点
-                    drawables.append(("tile", tile_name, pos_x, pos_y, feet_y))
+                pos_x = x * map_obj.tile_size
+                pos_y = y * map_obj.tile_size
+                # tile 高度=底部锚点
+                feet_y = pos_y + map_obj.tile_size
+                drawables.append(("tile", tile_name, pos_x, pos_y, feet_y))
 
         # 加入玩家
-        drawables.append(("player", player, player.x, player.y, player.y + 64))  # 64是角色高度
-        drawables.append(("player", player2, player2.x, player2.y, player2.y + 64))
+        drawables.append(("player", player, player.rect.x, player.rect.y, player.rect.y + 64))  # 64是角色高度
+        drawables.append(("player", player2, player2.rect.x, player2.rect.y, player2.rect.y + 64))
+#        print(drawables)
         # 按 feet_y 排序
         drawables.sort(key=lambda obj: obj[4])
 
@@ -148,6 +157,9 @@ def main():
             elif kind == "player":
                 _, p, _, _, _ = obj
                 p.draw(window)
+                #调试框
+                p.draw_debug_rect(window, DEBUG_MODE)
+                map_obj.draw_debug_rect_collision(window, DEBUG_MODE)
 
         # 更新显示
         pygame.display.update()

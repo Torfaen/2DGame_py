@@ -1,14 +1,14 @@
 {
   "map1": [
-    ["house", "house", "house", "house"],
-    ["house", "empty", "empty", "house"],
-    ["house", "empty", "empty", "house"],
-    ["house", "house", "house", "house"]
+    ["empty", "tree", "tree", "tree"],
+    ["tree", "empty", "empty", "tree"],
+    ["tree", "empty", "empty", "tree"],
+    ["tree", "tree", "tree", "tree"]
   ],
     "map2": [
-    ["house", "house", "house", "house"],
-    ["house", "empty", "empty", "house"],
-    ["house", "empty", "empty", "house"],
-    ["house", "house", "house", "house"]
+    ["tree", "tree", "tree", "tree"],
+    ["tree", "empty", "empty", "tree"],
+    ["tree", "empty", "empty", "tree"],
+    ["tree", "tree", "tree", "tree"]
   ]
 }
