@@ -109,7 +109,9 @@ class Player(pygame.sprite.Sprite):
             for rect in collision_rects:
                 if self.feet_rect.colliderect(rect):
                     # 碰到障碍则回退到旧位置
+                    #贴图位置
                     self.rect.x, self.rect.y = old_x, old_y
+                    #阴影位置
                     self.feet_x, self.feet_y = old_feet_x, old_feet_y
                     self.feet_rect.topleft = (self.feet_x, self.feet_y)
                     break
@@ -131,7 +133,9 @@ class Player(pygame.sprite.Sprite):
 
     def draw_debug_rect(self, window,DEBUG_MODE):
         if DEBUG_MODE:
+            #人物贴图框
 #            pygame.draw.rect(window, (255, 0, 0), (self.rect.x, self.rect.y, 54, 61), 1)
+            # 阴影框
             pygame.draw.rect(window, (0, 255, 0), self.feet_rect, 1)
 
 

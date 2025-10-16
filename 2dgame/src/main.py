@@ -139,6 +139,8 @@ def main():
         # 把地图物件加入列表
         for y in range(len(map_obj.visual_map)):
             for x in range(len(map_obj.visual_map[y])):
+                if map_obj.visual_map[y][x]=="empty":
+                    continue
                 tile_name = map_obj.visual_map[y][x]
 #                if tile_name in map_obj.block_tiles:
                     # 获取每个物件的绘制坐标（房子的底部在 tile_y + tile_size）
@@ -149,8 +151,8 @@ def main():
                 drawables.append(("tile", tile_name, pos_x, pos_y, feet_y))
 
         # 加入玩家
-        drawables.append(("player", player, player.rect.x, player.rect.y, player.rect.y + 64))  # 64是角色高度
-        drawables.append(("player", player2, player2.rect.x, player2.rect.y, player2.rect.y + 64))
+        drawables.append(("player", player, player.rect.x, player.rect.y, player.rect.y + 61))  # 64是角色高度
+        drawables.append(("player", player2, player2.rect.x, player2.rect.y, player2.rect.y + 61))
 #        print(drawables)
         # 按 feet_y 排序
         drawables.sort(key=lambda obj: obj[4])
@@ -166,7 +168,9 @@ def main():
                 p.draw(window)
                 #调试框
                 p.draw_debug_rect(window, DEBUG_MODE)
-                map_obj.draw_debug_rect_collision(window, DEBUG_MODE)
+            # 绘制地图碰撞框
+            map_obj.draw_debug_rect_collision(window, DEBUG_MODE)
+            map_obj.draw_debug_rect_visual(window, DEBUG_MODE)
 
         # 更新显示
         pygame.display.update()
