@@ -131,7 +131,8 @@ def main():
         player.draw(window)
         '''
         map_obj.draw_floor(window)
-        map_obj.draw_visual_layer(window)
+        #一次画完表现层
+#       map_obj.draw_visual_layer(window)
 
         # 把可遮挡的物体（房子）和玩家一起放到一个列表
         drawables = []
@@ -159,6 +160,7 @@ def main():
 
         # 依次绘制
         for obj in drawables:
+            now_obj= obj
             kind = obj[0]
             if kind == "tile":
                 _, tile_name, x, y, _ = obj

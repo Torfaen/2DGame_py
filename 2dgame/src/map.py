@@ -100,7 +100,7 @@ class Map:
                 self.visual_rects.append(rect)
 
 
-    def draw_tile(self, window, tile_name, grid_x, grid_y):
+    def draw_tile(self, window, tile_name, x, y):
         '''老的绘制贴图方式
         """绘制指定类型的瓷砖,在指定的坐标（x，y）"""
         draw_x = x * self.tile_size
@@ -116,13 +116,15 @@ class Map:
             window.blit(self.water, (draw_x, draw_y))
         '''
         if tile_name not in self.tiles :
-#            print(f"没有找到名为 {tile_name} 的贴图")
+            print(f"没有找到名为 {tile_name} 的贴图")
             return
         image = self.tiles[tile_name]
         # 底部对齐
-        draw_x = grid_x * self.tile_size
-        draw_y = grid_y * self.tile_size - (image.get_height() - self.tile_size)
+        draw_x = x
+        draw_y = y  - (image.get_height() - self.tile_size)
         window.blit(image, (draw_x, draw_y))
+
+
     def draw_floor(self, window):
         """按照JSON中地板配置绘制地板层"""
         if not self.floor_map:
@@ -131,10 +133,10 @@ class Map:
         for y in range(len(self.floor_map)):
             for x in range(len(self.floor_map[y])):
                 tile_name = self.floor_map[y][x]
- #               screen_x = x * self.tile_size
- #               screen_y = y * self.tile_size
-                #只传格子坐标，像素计算全部在draw_tile中完成
-                self.draw_tile(window, tile_name, x, y)
+                screen_x = x * self.tile_size
+                screen_y = y * self.tile_size
+
+                self.draw_tile(window, tile_name, screen_x, screen_y)
 
 
     def draw_visual_layer(self, window):
