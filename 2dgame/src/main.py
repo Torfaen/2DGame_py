@@ -8,7 +8,7 @@ import json
 # 设置窗口，全局参数设置
 WINDOW_WIDTH = 800
 WINDOW_HEIGHT = 600
-DEBUG_MODE=True
+DEBUG_MODE= False
 #------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # 地图测试区
 # 定义地图数据
@@ -42,6 +42,8 @@ def load_map_path(json_path,map_id):
         return json.load(f)
 
 def main():
+    # 声明使用全局变量
+    global DEBUG_MODE
     # 初始化Pygame
     pygame.init()
     window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -99,21 +101,26 @@ def main():
     while running:
         # 处理事件
         for event in pygame.event.get():
+            #关闭窗口
             if event.type == pygame.QUIT:
                 running = False
-
-        # 获取玩家的 Y 坐标
-        player_y = player.rect.y
-        player2_y = player2.rect.y
+            # 调试模式
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_1:
+                    DEBUG_MODE = not DEBUG_MODE
+                    print(f"Debug mode: {DEBUG_MODE}")
         # 更新玩家移动
-        player.move(0, 0)  # 调用移动方法
-        player2.move(0, 0)
+        player.move(0, 0,map_obj.collision_rects)  # 调用移动方法
 
+        player2.move(0, 0,map_obj.collision_rects)
+
+        '''
+        # 碰撞系统调试
         for block in map_obj.collision_rects:
             if player.feet_rect.colliderect(block)or player2.feet_rect.colliderect(block):
                 print("碰到了障碍物！")
-
-        # 绘制
+        '''
+        # 绘制画面
         window.fill((0, 0, 0))  # 清屏（黑色背景）
         '''
         #初版逻辑，没有锚点遮挡关系

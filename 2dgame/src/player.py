@@ -73,27 +73,46 @@ class Player(pygame.sprite.Sprite):
         self.current_frame = 0
         self.frames = []  # 不再使用
 
-    def move(self, dx, dy):
+    def move(self, dx, dy,collision_rects):
+        # 记录坐标
+        old_x, old_y = self.rect.x, self.rect.y
+        old_feet_x, old_feet_y = self.feet_x, self.feet_y
+        moved= False
         key = pygame.key.get_pressed()
         if key[self.controls["left"]]:
             self.rect.x -= self.speed
             self.feet_x-=self.speed
             self.direction = "left"
+            moved = True
 
         elif key[self.controls["right"]]:
             self.rect.x += self.speed
             self.feet_x+=self.speed
             self.direction = "right"
+            moved = True
+
         elif key[self.controls["up"]]:
             self.rect.y -= self.speed
             self.feet_y-=self.speed
             self.direction = "up"
+            moved = True
+
         elif key[self.controls["down"]]:
             self.rect.y += self.speed
             self.feet_y+=self.speed
             self.direction = "down"
+            moved = True
+
         # 同步 feet_rect 位置
         self.feet_rect.topleft = (self.feet_x, self.feet_y)
+        if moved:
+            for rect in collision_rects:
+                if self.feet_rect.colliderect(rect):
+                    # 碰到障碍则回退到旧位置
+                    self.rect.x, self.rect.y = old_x, old_y
+                    self.feet_x, self.feet_y = old_feet_x, old_feet_y
+                    self.feet_rect.topleft = (self.feet_x, self.feet_y)
+                    break
 
     def draw(self, window):
         #先渲染阴影
