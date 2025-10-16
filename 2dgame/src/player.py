@@ -1,8 +1,8 @@
 import pygame
 import os
-
-
+from bomb import Bomb
 class Player(pygame.sprite.Sprite):
+
     def __init__(self, id, x, y, controls, color):
         super().__init__()  # 调用父类初始化
         self.id = id
@@ -14,11 +14,10 @@ class Player(pygame.sprite.Sprite):
         self.controls = controls
         self.color = color
         self.direction = "down"
+        self.tile_size = 32
 
         # 核心属性
         self.speed = 4
-        self.max_bombs = 1
-        self.bomb_power = 1
         self.status = "free"
         self.alive = True
         # 锚点坐标，用于画阴影碰撞框
@@ -28,7 +27,15 @@ class Player(pygame.sprite.Sprite):
         # 阴影矩形碰撞框
         self.feet_rect = pygame.Rect(self.feet_x, self.feet_y, 30, 10)
 
-        # 扩展属性
+        # 泡泡属性
+        self.max_bombs = 100
+        self.bomb_power = 1
+        #泡泡冷却
+        self.bomb_cooldown = 0
+        # 0.2 秒冷却，60 FPS * 0.2 = 12 帧
+        self.bomb_cooldown_max = 12
+
+        # 泡泡列表
         self.bombs_active = []
         self.invincible_timer = 0
         self.score = 0
@@ -73,12 +80,36 @@ class Player(pygame.sprite.Sprite):
         self.current_frame = 0
         self.frames = []  # 不再使用
 
+
+    def check_bomb_placement(self, bombs_group):
+        # 检查当前激活的炸弹数量是否已达上限
+        if len(self.bombs_active) >= self.max_bombs:
+            return None
+        grid_x=round(self.rect.centerx/self.tile_size)*self.tile_size
+        grid_y=round(self.rect.centery/self.tile_size)*self.tile_size
+
+        for bomb in self.bombs_active:
+            if bomb.rect.x == grid_x and bomb.rect.y == grid_y:
+                return None
+
+        bomb_new=Bomb(grid_x,grid_y,self.bomb_power)
+        self.bombs_active.append(bomb_new)
+        bombs_group.add(bomb_new)
+        return bomb_new
+
+    def place_bomb(self, bombs_group):
+        """按键长按检测版：按下就尝试放置炸弹"""
+        keys = pygame.key.get_pressed()
+        if keys[self.controls["shift"]]:
+            self.check_bomb_placement(bombs_group)
+
     def move(self, dx, dy,collision_rects):
         # 记录坐标
         old_x, old_y = self.rect.x, self.rect.y
         old_feet_x, old_feet_y = self.feet_x, self.feet_y
         moved= False
         key = pygame.key.get_pressed()
+
         if key[self.controls["left"]]:
             self.rect.x -= self.speed
             self.feet_x-=self.speed

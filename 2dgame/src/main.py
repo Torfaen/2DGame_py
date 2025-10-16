@@ -1,5 +1,4 @@
 import os
-from http.cookiejar import join_header_words
 
 import pygame
 from player import Player
@@ -70,13 +69,15 @@ def main():
         "up": pygame.K_UP,
         "down": pygame.K_DOWN,
         "left": pygame.K_LEFT,
-        "right": pygame.K_RIGHT
+        "right": pygame.K_RIGHT,
+        "shift": pygame.K_RSHIFT
     }
     player2_controls = {
         "up": pygame.K_w,
         "down": pygame.K_s,
         "left": pygame.K_a,
-        "right": pygame.K_d
+        "right": pygame.K_d,
+        "shift": pygame.K_LSHIFT
     }
 
     player = Player(
@@ -87,6 +88,7 @@ def main():
         #读取贴图错误时使用红方块代替
         color=(255, 0, 0)  # 红色
     )
+
     player2 = Player(
         id=2,
         x=200,
@@ -95,12 +97,17 @@ def main():
         #读取贴图错误时使用红方块代替
         color=(255, 0, 0)  # 红色
     )
+    # 创建炸弹组
+    bombs_group = pygame.sprite.Group()
+
+
 
     # 主游戏循环
     running = True
     while running:
         # 处理事件
-        for event in pygame.event.get():
+        events=pygame.event.get()
+        for event in events:
             #关闭窗口
             if event.type == pygame.QUIT:
                 running = False
@@ -111,9 +118,9 @@ def main():
                     print(f"Debug mode: {DEBUG_MODE}")
         # 更新玩家移动
         player.move(0, 0,map_obj.collision_rects)  # 调用移动方法
-
+        player.place_bomb(bombs_group)
         player2.move(0, 0,map_obj.collision_rects)
-
+        player2.place_bomb(bombs_group)
         '''
         # 碰撞系统调试
         for block in map_obj.collision_rects:
@@ -154,7 +161,11 @@ def main():
         # 加入玩家
         drawables.append(("player", player, player.rect.x, player.rect.y, player.rect.y + 61))  # 64是角色高度
         drawables.append(("player", player2, player2.rect.x, player2.rect.y, player2.rect.y + 61))
-#        print(drawables)
+        # 加入泡泡
+        for bomb in bombs_group:
+            drawables.append(("bomb", bomb, bomb.rect.x, bomb.rect.y, bomb.rect.y))
+
+        #        print(drawables)
         # 按 feet_y 排序
         drawables.sort(key=lambda obj: obj[4])
 
@@ -168,9 +179,12 @@ def main():
             elif kind == "player":
                 _, p, _, _, _ = obj
                 p.draw(window)
-                #调试框
-                p.draw_debug_rect(window, DEBUG_MODE)
+            elif kind == "bomb":
+                _, bomb_obj, _, _, _ = obj
+                bomb_obj.draw_bomb(window)  # 需要在 Bomb 类中实现 draw 方法
             # 绘制地图碰撞框
+            player.draw_debug_rect(window, DEBUG_MODE)
+            player2.draw_debug_rect(window, DEBUG_MODE)
             map_obj.draw_debug_rect_collision(window, DEBUG_MODE)
             map_obj.draw_debug_rect_visual(window, DEBUG_MODE)
 
