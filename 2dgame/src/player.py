@@ -1,6 +1,7 @@
 import pygame
 import os
 from bomb import Bomb
+FPS=60
 class Player(pygame.sprite.Sprite):
 
     def __init__(self, id, x, y, controls, color):
@@ -33,8 +34,7 @@ class Player(pygame.sprite.Sprite):
         #泡泡冷却
         self.bomb_cooldown = 0
         # 0.2 秒冷却，60 FPS * 0.2 = 12 帧
-        self.bomb_cooldown_max = 12
-
+        self.bomb_cooldown_max = FPS*0.25
         # 泡泡列表
         self.bombs_active = []
         self.invincible_timer = 0
@@ -73,6 +73,9 @@ class Player(pygame.sprite.Sprite):
         except pygame.error as e:
             print(f"无法加载玩家图片: {e}")
 
+    def update_bomb_cooldown(self):
+        if self.bomb_cooldown > 0:
+            self.bomb_cooldown -= 1
 
         # 移除不需要的精灵图相关字段
         self.animation_timer = 0
@@ -81,8 +84,9 @@ class Player(pygame.sprite.Sprite):
         self.frames = []  # 不再使用
 
 
-    def check_bomb_placement(self, bombs_group):
-        # 检查当前激活的炸弹数量是否已达上限
+    def handle_bomb_group(self, bombs_group):
+        # 检查当前激活的炸弹数量是否合法
+
         if len(self.bombs_active) >= self.max_bombs:
             return None
         grid_x=round(self.rect.centerx/self.tile_size)*self.tile_size
@@ -95,13 +99,16 @@ class Player(pygame.sprite.Sprite):
         bomb_new=Bomb(grid_x,grid_y,self.bomb_power)
         self.bombs_active.append(bomb_new)
         bombs_group.add(bomb_new)
+        #放下泡泡，开始冷却
+        self.bomb_cooldown = self.bomb_cooldown_max
+
         return bomb_new
 
     def place_bomb(self, bombs_group):
         """按键长按检测版：按下就尝试放置炸弹"""
         keys = pygame.key.get_pressed()
-        if keys[self.controls["shift"]]:
-            self.check_bomb_placement(bombs_group)
+        if keys[self.controls["shift"]] and self.bomb_cooldown <= 0:
+            self.handle_bomb_group(bombs_group)
 
     def move(self, dx, dy,collision_rects):
         # 记录坐标
