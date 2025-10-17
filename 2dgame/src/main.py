@@ -121,8 +121,8 @@ def main():
         player.place_bomb(bombs_group)
         player2.move(0, 0,map_obj.collision_rects)
         player2.place_bomb(bombs_group)
-        player.update_bomb_cooldown()
-        player2.update_bomb_cooldown()
+        player.update_player_bomb_cooldown()
+        player2.update_player_bomb_cooldown()
         '''
         # 碰撞系统调试
         for block in map_obj.collision_rects:

@@ -73,7 +73,7 @@ class Player(pygame.sprite.Sprite):
         except pygame.error as e:
             print(f"无法加载玩家图片: {e}")
 
-    def update_bomb_cooldown(self):
+    def update_player_bomb_cooldown(self):
         if self.bomb_cooldown > 0:
             self.bomb_cooldown -= 1
 
