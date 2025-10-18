@@ -36,6 +36,7 @@ class Map:
         self.visual_map = None
         self.collision_rects = []  # 存储所有障碍物的碰撞框
         self.visual_rects = []
+        self.floor_rects=[]
         # 贴图字典，用于自动加载文件夹内贴图,全部存入 self.tiles
         self.tiles = {}
         tiles_path = os.path.join("..", "assets", "sprites", "background","map_base")
@@ -59,6 +60,12 @@ class Map:
         # 水 (32,32) - 32x32
         self.water = sprite_sheet.get_sprite(32, 32, 32, 32)
     '''
+
+    def draw_debug_rect_floor(self, window, debug_mode):
+        if not debug_mode:
+            return
+        for rect in self.floor_rects:
+            pygame.draw.rect(window, "yellow", rect, 1)
 
     #定义锚点为左上角topleft
     def draw_debug_rect_collision(self, window, debug_mode):
@@ -88,6 +95,12 @@ class Map:
     def set_floor_map(self, floor_data):
         """设置地板层"""
         self.floor_map = floor_data
+        for y in range(len(self.floor_map)):
+            for x in range(len(self.floor_map[y])):
+                if floor_data[y][x] == "empty":
+                    continue
+                rect = pygame.Rect(x * self.tile_size, y * self.tile_size, self.tile_size, self.tile_size)
+                self.floor_rects.append(rect)
 
     def set_visual_map(self, visual_data):
         """设置表现层"""

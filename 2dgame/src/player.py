@@ -41,6 +41,7 @@ class Player(pygame.sprite.Sprite):
         self.score = 0
         self.powerups = {}
         self.cooldown = 0
+        self.bombs_active = [b for b in self.bombs_active if not b.exploded]
 
         # 加载各个方向的图像
         self.images = {
@@ -62,7 +63,7 @@ class Player(pygame.sprite.Sprite):
 
         #加载玩家贴图,后续版本改为传参形式选角色
         try:
-            base_path = os.path.join("..", "assets", "sprites", "player", "player1_sprite")
+            base_path = os.path.join("..", "assets", "sprites", "player", "player2_sprite")
             for direction in self.images.keys():
                 image_path = os.path.join(base_path, f"{direction}.png")
                 if os.path.exists(image_path):
@@ -77,27 +78,23 @@ class Player(pygame.sprite.Sprite):
         if self.bomb_cooldown > 0:
             self.bomb_cooldown -= 1
 
-        # 移除不需要的精灵图相关字段
-        self.animation_timer = 0
-        self.animation_speed = 10
-        self.current_frame = 0
-        self.frames = []  # 不再使用
-
 
     def handle_bomb_group(self, bombs_group):
-        # 检查当前激活的炸弹数量是否合法
-
+        # 检查当前想激活的泡泡是否合法，移除已经爆炸的泡泡
+        self.bombs_active = [b for b in self.bombs_active if not b.exploded]
         if len(self.bombs_active) >= self.max_bombs:
             return None
-        grid_x=round(self.rect.centerx/self.tile_size)*self.tile_size
-        grid_y=round(self.rect.centery/self.tile_size)*self.tile_size
+        # round固定泡泡坐标在格子中心
+        x = round(self.feet_rect.centerx // self.tile_size) * self.tile_size
+        y = round(self.feet_rect.centery // self.tile_size) * self.tile_size
 
         for bomb in self.bombs_active:
-            if bomb.rect.x == grid_x and bomb.rect.y == grid_y:
+            if bomb.rect.x == x and bomb.rect.y == y:
                 return None
 
-        bomb_new=Bomb(grid_x,grid_y,self.bomb_power)
+        bomb_new=Bomb(x,y,self.bomb_power)
         self.bombs_active.append(bomb_new)
+        #合法的泡泡添加进容器
         bombs_group.add(bomb_new)
         #放下泡泡，开始冷却
         self.bomb_cooldown = self.bomb_cooldown_max

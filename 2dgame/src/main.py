@@ -123,6 +123,11 @@ def main():
         player2.place_bomb(bombs_group)
         player.update_player_bomb_cooldown()
         player2.update_player_bomb_cooldown()
+
+        # 泡泡列表信息更新
+        for bomb in list(bombs_group):
+            bomb.handle_bomb_exploded()
+
         '''
         # 碰撞系统调试
         for block in map_obj.collision_rects:
@@ -185,10 +190,12 @@ def main():
                 _, bomb_obj, _, _, _ = obj
                 bomb_obj.draw_bomb(window)  # 需要在 Bomb 类中实现 draw 方法
             # 绘制地图碰撞框
+            map_obj.draw_debug_rect_floor(window,DEBUG_MODE)
+            map_obj.draw_debug_rect_visual(window, DEBUG_MODE)
+            map_obj.draw_debug_rect_collision(window, DEBUG_MODE)
+
             player.draw_debug_rect(window, DEBUG_MODE)
             player2.draw_debug_rect(window, DEBUG_MODE)
-            map_obj.draw_debug_rect_collision(window, DEBUG_MODE)
-            map_obj.draw_debug_rect_visual(window, DEBUG_MODE)
 
         # 更新显示
         pygame.display.update()

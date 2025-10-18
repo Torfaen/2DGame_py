@@ -9,3 +9,12 @@ def load_sprites():
         frame_path = f"assets/sprites/player/idle/frame_{i}.png"
         frame = pygame.image.load(frame_path)
         frames.append(frame)
+
+
+
+def load_sprite_path(sprite_name):
+    path="assets/sprites/player/idle"
+    return path
+
+def load_map():
+    pass
