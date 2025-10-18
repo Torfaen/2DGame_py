@@ -1,6 +1,6 @@
 import pygame
 import os
-
+from Explosion import ExplosionLayer
 TILE_SIZE=32
 FPS=60
 class Bomb(pygame.sprite.Sprite):
@@ -74,8 +74,14 @@ class Bomb(pygame.sprite.Sprite):
                 if self.rect.colliderect(bomb.rect):
                     nearby_bombs.append(bomb)
 
-    def trigger_chain_explode(self, bombs_group):
-        pass
+    def trigger_chain_explode(self):
+        if not self.exploded:
+            self.exploded= True
+            self.explosion_timer=30
+            ExplosionLayer.add_explosion(self)
+            self.kill()
+
+
     def handle_bomb_exploded(self):
         self.timer+=1
         #放泡泡到炸之前
