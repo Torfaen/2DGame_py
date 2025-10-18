@@ -29,7 +29,6 @@ collision_map = [
 # map_obj = Map()
 # map_obj.set_collision_map(collision_map)
 # map_obj.set_visual_map(visual_map)
-print("1")
 '''
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 def load_map_path(json_path,map_id):
@@ -50,16 +49,16 @@ def main():
 
     # 地图路径
     floor_map_path = os.path.join("..", "map", "floor_map.json")
-    visual_map_path=os.path.join("..","map","visual_map.json")
+    barrier_map_path=os.path.join("..","map","barrier_map.json")
     collision_map_path=os.path.join("..","map","collision_map.json")
     floor_map=load_map_path(floor_map_path,"map1")
-    visual_map=load_map_path(visual_map_path,"map1")
+    barrier_map=load_map_path(barrier_map_path,"map1")
     collision_map=load_map_path(collision_map_path,"map1")
     # 创建地图对象
     map_obj = Map()
     map_obj.set_floor_map(floor_map)
     map_obj.set_collision_map(collision_map)
-    map_obj.set_visual_map(visual_map)
+    map_obj.set_barrier_map(barrier_map)
 
     # 设置时钟
     clock = pygame.time.Clock()
@@ -115,7 +114,6 @@ def main():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_1:
                     DEBUG_MODE = not DEBUG_MODE
-                    print(f"Debug mode: {DEBUG_MODE}")
         # 更新玩家移动
         player.move(0, 0,map_obj.collision_rects)  # 调用移动方法
         player.place_bomb(bombs_group)
@@ -127,12 +125,16 @@ def main():
         # 泡泡列表信息更新
         for bomb in list(bombs_group):
             bomb.handle_bomb_exploded()
+             # 处理爆炸逻辑
+            if bomb.exploded and bomb.explosion_timer >= 29 and not bomb.explosion_handled:  # 刚爆炸时且未处理过
+                bomb.handle_explosion(map_obj, bombs_group)
 
         '''
         # 碰撞系统调试
-        for block in map_obj.collision_rects:
-            if player.feet_rect.colliderect(block)or player2.feet_rect.colliderect(block):
-                print("碰到了障碍物！")
+        # 碰撞检测（已注释，因为移动逻辑中已处理）
+        # for block in map_obj.collision_rects:
+        #     if player.feet_rect.colliderect(block)or player2.feet_rect.colliderect(block):
+        #         pass
         '''
         # 绘制画面
         window.fill((0, 0, 0))  # 清屏（黑色背景）
@@ -140,23 +142,23 @@ def main():
         #初版逻辑，没有锚点遮挡关系
         map_obj.draw_floor(window)
 
-        map_obj.draw_visual_layer(window)
+        map_obj.draw_barrier_layer(window)
 
         player.draw(window)
         '''
         map_obj.draw_floor(window)
         #一次画完表现层
-#       map_obj.draw_visual_layer(window)
+#       map_obj.draw_barrier_layer(window)
 
         # 把可遮挡的物体（房子）和玩家一起放到一个列表
         drawables = []
 
         # 把地图物件加入列表
-        for y in range(len(map_obj.visual_map)):
-            for x in range(len(map_obj.visual_map[y])):
-                if map_obj.visual_map[y][x]=="empty":
+        for y in range(len(map_obj.barrier_map)):
+            for x in range(len(map_obj.barrier_map[y])):
+                if map_obj.barrier_map[y][x]=="empty":
                     continue
-                tile_name = map_obj.visual_map[y][x]
+                tile_name = map_obj.barrier_map[y][x]
 #                if tile_name in map_obj.block_tiles:
                     # 获取每个物件的绘制坐标（房子的底部在 tile_y + tile_size）
                 pos_x = x * map_obj.tile_size
@@ -172,7 +174,7 @@ def main():
         for bomb in bombs_group:
             drawables.append(("bomb", bomb, bomb.rect.x, bomb.rect.y, bomb.rect.y))
 
-        #        print(drawables)
+        # 调试：print(drawables)
         # 按 feet_y 排序
         drawables.sort(key=lambda obj: obj[4])
 
@@ -188,10 +190,11 @@ def main():
                 p.draw(window)
             elif kind == "bomb":
                 _, bomb_obj, _, _, _ = obj
-                bomb_obj.draw_bomb(window)  # 需要在 Bomb 类中实现 draw 方法
+                bomb_obj.draw_bomb(window, map_obj)  # 传入地图对象用于爆炸范围计算
             # 绘制地图碰撞框
-            map_obj.draw_debug_rect_floor(window,DEBUG_MODE)
-            map_obj.draw_debug_rect_visual(window, DEBUG_MODE)
+            #map_obj.draw_debug_rect_floor(window,DEBUG_MODE)
+            map_obj.draw_debug_rect_barrier(window, DEBUG_MODE)
+            map_obj.draw_debug_barrier_coords(window, DEBUG_MODE)  # 显示barrier坐标
             map_obj.draw_debug_rect_collision(window, DEBUG_MODE)
 
             player.draw_debug_rect(window, DEBUG_MODE)

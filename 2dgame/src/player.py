@@ -23,14 +23,14 @@ class Player(pygame.sprite.Sprite):
         self.alive = True
         # 锚点坐标，用于画阴影碰撞框
 
-        self.feet_x = x+11
+        self.feet_x = x+14
         self.feet_y = y+50
-        # 阴影矩形碰撞框
-        self.feet_rect = pygame.Rect(self.feet_x, self.feet_y, 30, 10)
+        # 阴影矩形碰撞框（中心不变，左右各缩3像素）
+        self.feet_rect = pygame.Rect(self.feet_x, self.feet_y, 24, 10)
 
         # 泡泡属性
         self.max_bombs = 100
-        self.bomb_power = 1
+        self.bomb_power = 6
         #泡泡冷却
         self.bomb_cooldown = 0
         # 0.2 秒冷却，60 FPS * 0.2 = 12 帧

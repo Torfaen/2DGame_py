@@ -33,9 +33,9 @@ class Map:
         self.tile_size=32
         self.collision_map = None
         self.floor_map= None
-        self.visual_map = None
+        self.barrier_map = None
         self.collision_rects = []  # 存储所有障碍物的碰撞框
-        self.visual_rects = []
+        self.barrier_rects = []
         self.floor_rects=[]
         # 贴图字典，用于自动加载文件夹内贴图,全部存入 self.tiles
         self.tiles = {}
@@ -73,15 +73,52 @@ class Map:
             for rect in self.collision_rects:
                 pygame.draw.rect(window, (0, 0, 255), rect, 1)
 
-    def draw_debug_rect_visual(self, window, debug_mode):
+    def draw_debug_rect_barrier(self, window, debug_mode):
         if debug_mode:
             '''
-            for rect in self.visual_map:
+            for rect in self.barrier_map:
                 pygame.draw.rect(window, (255, 0, 0), rect, 1)
             '''
             radius = 4
-            for rect in self.visual_rects:
-                pygame.draw.circle(window, (0, 169, 255),  (rect.x, rect.y) ,radius)
+            for rect in self.barrier_rects:
+                pygame.draw.circle(window, (0, 169, 255), (rect.x, rect.y), radius)
+
+    def draw_debug_barrier_coords(self, window, debug_mode):
+        if debug_mode:
+            # 只在第一次调用时初始化字体和缓存
+            if not hasattr(self, '_debug_coord_font'):
+                self._debug_coord_font = pygame.font.Font(None, 14)
+                self._debug_coord_text_cache = {}
+                self._debug_coord_text_rects_cache = {}
+                self._debug_coord_frame_counter = 0
+            
+            # 每5帧只更新一次，大幅减少绘制频率
+            self._debug_coord_frame_counter += 1
+            if self._debug_coord_frame_counter % 5 != 0:
+                return
+            
+
+            for rect in self.barrier_rects:
+                 
+                # 计算grid坐标
+                grid_x = rect.x // self.tile_size
+                grid_y = rect.y // self.tile_size
+                
+                # 使用缓存避免重复渲染文本
+                coord_text = f"({grid_x},{grid_y})"
+                if coord_text not in self._debug_coord_text_cache:
+                    self._debug_coord_text_cache[coord_text] = self._debug_coord_font.render(coord_text, True, (255, 255, 255))
+                    text_rect = self._debug_coord_text_cache[coord_text].get_rect()
+                    self._debug_coord_text_rects_cache[coord_text] = text_rect
+                
+                # 获取缓存的文本和矩形
+                text_surface = self._debug_coord_text_cache[coord_text]
+                text_rect = self._debug_coord_text_rects_cache[coord_text].copy()
+                text_rect.center = (rect.x + self.tile_size // 2, rect.y + self.tile_size // 2)
+                
+                # 简化绘制：只绘制文本，不绘制背景
+                window.blit(text_surface, text_rect)
+
 
     def set_collision_map(self, collision_data):
         """设置碰撞层"""
@@ -102,17 +139,35 @@ class Map:
                 rect = pygame.Rect(x * self.tile_size, y * self.tile_size, self.tile_size, self.tile_size)
                 self.floor_rects.append(rect)
 
-    def set_visual_map(self, visual_data):
-        """设置表现层"""
-        self.visual_map = visual_data
-        for y in range(len(self.visual_map)):
-            for x in range(len(self.visual_map[y])):
-                if visual_data[y][x] == "empty":
+    def set_barrier_map(self, barrier_data):
+        """设置障碍物层"""
+        self.barrier_map = barrier_data
+        for y in range(len(self.barrier_map)):
+            for x in range(len(self.barrier_map[y])):
+                if barrier_data[y][x] == "empty":
                     continue
                 rect = pygame.Rect(x * self.tile_size, y * self.tile_size, self.tile_size, self.tile_size)
-                self.visual_rects.append(rect)
+                self.barrier_rects.append(rect)
 
-
+    #障碍物破坏部分函数
+    def remove_barrier(self, x, y):
+        #二维数组索引，先行后列y 表示行号（垂直方向）x 表示列号（水平方向）
+        old_obj_name=self.barrier_map[y][x]
+        self.barrier_map[y][x] = "empty"
+        # 移除对应的碰撞框
+        target_rect = pygame.Rect(x * self.tile_size, y * self.tile_size, 
+                                self.tile_size, self.tile_size)
+        self.barrier_rects = [rect for rect in self.barrier_rects 
+                            if not rect.collidepoint(target_rect.center)]
+        print(f"remove barrier:{old_obj_name}")
+                            
+    def remove_collision(self, x, y):
+        self.collision_map[y][x] = 0
+        target_rect = pygame.Rect(x * self.tile_size, y * self.tile_size, 
+                                self.tile_size, self.tile_size)
+        self.collision_rects=[rect for rect in self.collision_rects 
+                            if not rect.collidepoint(target_rect.center)]
+                            
     def draw_tile(self, window, tile_name, x, y):
         '''老的绘制贴图方式
         """绘制指定类型的瓷砖,在指定的坐标（x，y）"""
@@ -152,12 +207,12 @@ class Map:
                 self.draw_tile(window, tile_name, screen_x, screen_y)
 
 
-    def draw_visual_layer(self, window):
-        """绘制表现层"""
-        if not self.visual_map:
+    def draw_barrier_layer(self, window):
+        """绘制障碍物层"""
+        if not self.barrier_map:
             return
-        for y in range(len(self.visual_map)):
-            for x in range(len(self.visual_map[y])):
-                tile_name = self.visual_map[y][x]
+        for y in range(len(self.barrier_map)):
+            for x in range(len(self.barrier_map[y])):
+                tile_name = self.barrier_map[y][x]
                 #if tile_name in self.block_tiles:
                 self.draw_tile(window,tile_name, x , y )
