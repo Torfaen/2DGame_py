@@ -1,5 +1,4 @@
 import os
-from http.cookiejar import join_header_words
 
 import pygame
 from player import Player
@@ -8,6 +7,7 @@ import json
 # 设置窗口，全局参数设置
 WINDOW_WIDTH = 800
 WINDOW_HEIGHT = 600
+DEBUG_MODE= False
 #------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # 地图测试区
 # 定义地图数据
@@ -29,7 +29,6 @@ collision_map = [
 # map_obj = Map()
 # map_obj.set_collision_map(collision_map)
 # map_obj.set_visual_map(visual_map)
-print("1")
 '''
 #---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 def load_map_path(json_path,map_id):
@@ -41,6 +40,8 @@ def load_map_path(json_path,map_id):
         return json.load(f)
 
 def main():
+    # 声明使用全局变量
+    global DEBUG_MODE
     # 初始化Pygame
     pygame.init()
     window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -48,16 +49,16 @@ def main():
 
     # 地图路径
     floor_map_path = os.path.join("..", "map", "floor_map.json")
-    visual_map_path=os.path.join("..","map","visual_map.json")
+    barrier_map_path=os.path.join("..","map","barrier_map.json")
     collision_map_path=os.path.join("..","map","collision_map.json")
     floor_map=load_map_path(floor_map_path,"map1")
-    visual_map=load_map_path(visual_map_path,"map1")
+    barrier_map=load_map_path(barrier_map_path,"map1")
     collision_map=load_map_path(collision_map_path,"map1")
     # 创建地图对象
     map_obj = Map()
     map_obj.set_floor_map(floor_map)
     map_obj.set_collision_map(collision_map)
-    map_obj.set_visual_map(visual_map)
+    map_obj.set_barrier_map(barrier_map)
 
     # 设置时钟
     clock = pygame.time.Clock()
@@ -67,7 +68,15 @@ def main():
         "up": pygame.K_UP,
         "down": pygame.K_DOWN,
         "left": pygame.K_LEFT,
-        "right": pygame.K_RIGHT
+        "right": pygame.K_RIGHT,
+        "shift": pygame.K_RSHIFT
+    }
+    player2_controls = {
+        "up": pygame.K_w,
+        "down": pygame.K_s,
+        "left": pygame.K_a,
+        "right": pygame.K_d,
+        "shift": pygame.K_LSHIFT
     }
 
     player = Player(
@@ -79,52 +88,99 @@ def main():
         color=(255, 0, 0)  # 红色
     )
 
+    player2 = Player(
+        id=2,
+        x=200,
+        y=100,
+        controls=player2_controls,
+        #读取贴图错误时使用红方块代替
+        color=(255, 0, 0)  # 红色
+    )
+    # 创建炸弹组
+    bombs_group = pygame.sprite.Group()
+
+
+
     # 主游戏循环
     running = True
     while running:
         # 处理事件
-        for event in pygame.event.get():
+        events=pygame.event.get()
+        for event in events:
+            #关闭窗口
             if event.type == pygame.QUIT:
                 running = False
-
-        # 获取玩家的 Y 坐标
-        player_y = player.y
+            # 调试模式
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_1:
+                    DEBUG_MODE = not DEBUG_MODE
         # 更新玩家移动
-        player.move(0, 0)  # 调用移动方法
-        # 绘制
+        player.move(0, 0,map_obj.collision_rects)  # 调用移动方法
+        player.place_bomb(bombs_group)
+        player2.move(0, 0,map_obj.collision_rects)
+        player2.place_bomb(bombs_group)
+        player.update_player_bomb_cooldown()
+        player2.update_player_bomb_cooldown()
+
+        # 泡泡列表信息更新
+        for bomb in list(bombs_group):
+            bomb.handle_bomb_exploded()
+             # 处理爆炸逻辑
+            if bomb.exploded and bomb.explosion_timer >= 29 and not bomb.explosion_handled:  # 刚爆炸时且未处理过
+                bomb.handle_explosion(map_obj, bombs_group)
+
+        '''
+        # 碰撞系统调试
+        # 碰撞检测（已注释，因为移动逻辑中已处理）
+        # for block in map_obj.collision_rects:
+        #     if player.feet_rect.colliderect(block)or player2.feet_rect.colliderect(block):
+        #         pass
+        '''
+        # 绘制画面
         window.fill((0, 0, 0))  # 清屏（黑色背景）
         '''
         #初版逻辑，没有锚点遮挡关系
         map_obj.draw_floor(window)
 
-        map_obj.draw_visual_layer(window)
+        map_obj.draw_barrier_layer(window)
 
         player.draw(window)
         '''
         map_obj.draw_floor(window)
+        #一次画完表现层
+#       map_obj.draw_barrier_layer(window)
 
         # 把可遮挡的物体（房子）和玩家一起放到一个列表
         drawables = []
 
         # 把地图物件加入列表
-        for y in range(len(map_obj.visual_map)):
-            for x in range(len(map_obj.visual_map[y])):
-                tile_name = map_obj.visual_map[y][x]
-                if tile_name in map_obj.block_tiles:
+        for y in range(len(map_obj.barrier_map)):
+            for x in range(len(map_obj.barrier_map[y])):
+                if map_obj.barrier_map[y][x]=="empty":
+                    continue
+                tile_name = map_obj.barrier_map[y][x]
+#                if tile_name in map_obj.block_tiles:
                     # 获取每个物件的绘制坐标（房子的底部在 tile_y + tile_size）
-                    pos_x = x * map_obj.tile_size
-                    pos_y = y * map_obj.tile_size
-                    feet_y = pos_y + map_obj.tile_size  # 假设 tile 高度=底部锚点
-                    drawables.append(("tile", tile_name, pos_x, pos_y, feet_y))
+                pos_x = x * map_obj.tile_size
+                pos_y = y * map_obj.tile_size
+                # tile 高度=底部锚点
+                feet_y = pos_y + map_obj.tile_size
+                drawables.append(("tile", tile_name, pos_x, pos_y, feet_y))
 
         # 加入玩家
-        drawables.append(("player", player, player.x, player.y, player.y + 64))  # 64是角色高度
+        drawables.append(("player", player, player.rect.x, player.rect.y, player.rect.y + 61))  # 64是角色高度
+        drawables.append(("player", player2, player2.rect.x, player2.rect.y, player2.rect.y + 61))
+        # 加入泡泡
+        for bomb in bombs_group:
+            drawables.append(("bomb", bomb, bomb.rect.x, bomb.rect.y, bomb.rect.y))
 
+        # 调试：print(drawables)
         # 按 feet_y 排序
         drawables.sort(key=lambda obj: obj[4])
 
         # 依次绘制
         for obj in drawables:
+            now_obj= obj
             kind = obj[0]
             if kind == "tile":
                 _, tile_name, x, y, _ = obj
@@ -132,6 +188,17 @@ def main():
             elif kind == "player":
                 _, p, _, _, _ = obj
                 p.draw(window)
+            elif kind == "bomb":
+                _, bomb_obj, _, _, _ = obj
+                bomb_obj.draw_bomb(window, map_obj)  # 传入地图对象用于爆炸范围计算
+            # 绘制地图碰撞框
+            #map_obj.draw_debug_rect_floor(window,DEBUG_MODE)
+            map_obj.draw_debug_rect_barrier(window, DEBUG_MODE)
+            map_obj.draw_debug_barrier_coords(window, DEBUG_MODE)  # 显示barrier坐标
+            map_obj.draw_debug_rect_collision(window, DEBUG_MODE)
+
+            player.draw_debug_rect(window, DEBUG_MODE)
+            player2.draw_debug_rect(window, DEBUG_MODE)
 
         # 更新显示
         pygame.display.update()
