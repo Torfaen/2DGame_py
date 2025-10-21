@@ -8,6 +8,7 @@ import json
 WINDOW_WIDTH = 800
 WINDOW_HEIGHT = 600
 DEBUG_MODE= False
+GAMEMODE="POINT"
 #------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # 地图测试区
 # 定义地图数据
@@ -98,7 +99,9 @@ def main():
     )
     # 创建炸弹组
     bombs_group = pygame.sprite.Group()
-
+    # 创建玩家组
+    players_group = pygame.sprite.Group()
+    players_group.add(player, player2)
 
 
     # 主游戏循环
@@ -115,19 +118,16 @@ def main():
                 if event.key == pygame.K_1:
                     DEBUG_MODE = not DEBUG_MODE
         # 更新玩家移动
-        player.move(0, 0,map_obj.collision_rects)  # 调用移动方法
-        player.place_bomb(bombs_group)
-        player2.move(0, 0,map_obj.collision_rects)
-        player2.place_bomb(bombs_group)
-        player.update_player_bomb_cooldown()
-        player2.update_player_bomb_cooldown()
-
+        for player_obj in players_group:
+            player_obj.move(0, 0, map_obj.collision_rects)
+            player_obj.place_bomb(bombs_group)
+            player_obj.update_player_bomb_cooldown()
         # 泡泡列表信息更新
         for bomb in list(bombs_group):
             bomb.handle_bomb_exploded()
              # 处理爆炸逻辑
             if bomb.exploded and bomb.explosion_timer >= 29 and not bomb.explosion_handled:  # 刚爆炸时且未处理过
-                bomb.handle_explosion(map_obj, bombs_group)
+                bomb.handle_explosion(map_obj, bombs_group,players_group)
 
         '''
         # 碰撞系统调试
@@ -168,8 +168,8 @@ def main():
                 drawables.append(("tile", tile_name, pos_x, pos_y, feet_y))
 
         # 加入玩家
-        drawables.append(("player", player, player.rect.x, player.rect.y, player.rect.y + 61))  # 64是角色高度
-        drawables.append(("player", player2, player2.rect.x, player2.rect.y, player2.rect.y + 61))
+        for player_obj in players_group:
+            drawables.append(("player", player_obj, player_obj.rect.x, player_obj.rect.y, player_obj.rect.y + 61))
         # 加入泡泡
         for bomb in bombs_group:
             drawables.append(("bomb", bomb, bomb.rect.x, bomb.rect.y, bomb.rect.y))
@@ -197,8 +197,8 @@ def main():
             map_obj.draw_debug_barrier_coords(window, DEBUG_MODE)  # 显示barrier坐标
             map_obj.draw_debug_rect_collision(window, DEBUG_MODE)
 
-            player.draw_debug_rect(window, DEBUG_MODE)
-            player2.draw_debug_rect(window, DEBUG_MODE)
+            for player_obj in players_group:
+                player_obj.draw_debug_rect(window, DEBUG_MODE)
 
         # 更新显示
         pygame.display.update()

@@ -21,6 +21,7 @@ class Player(pygame.sprite.Sprite):
         self.speed = 4
         self.status = "free"
         self.alive = True
+        
         # 锚点坐标，用于画阴影碰撞框
 
         self.feet_x = x+14
@@ -73,6 +74,21 @@ class Player(pygame.sprite.Sprite):
                     print(f"警告：找不到图片 {image_path}")
         except pygame.error as e:
             print(f"无法加载玩家图片: {e}")
+
+    
+    def gotkilled(self):
+        self.kill()
+        print(f"玩家{self.id}被炸死了")
+
+    def hit_by_bomb(self):
+        self.alive = False
+        self.status = "dead"
+        # 或使用实际图像
+        self.image = pygame.Surface((54, 61))  
+        # 临时填充白色
+        self.image.fill((255, 0, 0))  
+        self.gotkilled()
+
 
     def update_player_bomb_cooldown(self):
         if self.bomb_cooldown > 0:

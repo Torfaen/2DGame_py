@@ -138,7 +138,7 @@ class Bomb(pygame.sprite.Sprite):
     3. check_chain_explosions()      // 检查连锁
     }
     '''
-    def handle_explosion(self, map_obj, bombs_group):
+    def handle_explosion(self, map_obj, bombs_group,players_group):
         if self.explosion_handled:
             return  # 已经处理过，避免重复处理
             
@@ -146,15 +146,22 @@ class Bomb(pygame.sprite.Sprite):
 
         # 获取爆炸范围
         explosion_area = self.get_explosion_area(map_obj)
+        
         # 检查连锁爆炸
         for bomb in bombs_group:
             if bomb != self and not bomb.exploded:  # 不是自己且未爆炸
                 bomb_x = bomb.rect.x // TILE_SIZE
                 bomb_y = bomb.rect.y // TILE_SIZE
-                
+        
                 if (bomb_x, bomb_y) in explosion_area:
                     # 设置立即爆炸
                     bomb.trigger_chain_explosion()
+        for player in players_group:
+            
+            if player.feet_rect.colliderect(self.rect):
+                player.hit_by_bomb()
+
+            
         # 最后摧毁爆炸范围内的障碍物，获取爆炸范围和连锁爆炸的处理要基于原始地图！
         self.destroy_blocks_in_explosion(map_obj)
 
