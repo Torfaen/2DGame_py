@@ -160,11 +160,22 @@ class Map:
         self.barrier_rects = [rect for rect in self.barrier_rects 
                             if not rect.collidepoint(target_rect.center)]
         print(f"remove barrier:{old_obj_name}")
-                            
-    def remove_collision(self, x, y):
-        self.collision_map[y][x] = 0
-        target_rect = pygame.Rect(x * self.tile_size, y * self.tile_size, 
-                                self.tile_size, self.tile_size)
+
+    def generate_collision(self, grid_x, grid_y):
+        # 先检查是否已存在相同位置的碰撞矩形，有就返回
+        if any(rect.x == grid_x * self.tile_size and rect.y == grid_y * self.tile_size
+               for rect in self.collision_rects):
+            return
+        # 确认不存在后再添加
+        self.collision_map[grid_y][grid_x] = 1
+        target_rect = pygame.Rect(grid_x * self.tile_size, grid_y * self.tile_size,
+                                  self.tile_size, self.tile_size)
+        self.collision_rects.append(target_rect)
+
+    def remove_collision(self, grid_x, grid_y):
+        self.collision_map[grid_y][grid_x] = 0
+        target_rect = pygame.Rect(grid_x * self.tile_size, grid_y * self.tile_size,
+                                  self.tile_size, self.tile_size)
         self.collision_rects=[rect for rect in self.collision_rects 
                             if not rect.collidepoint(target_rect.center)]
                             

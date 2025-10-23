@@ -1,10 +1,13 @@
 import pygame
 import os
+
+from pygame.examples.grid import TILE_SIZE
+
 from bomb import Bomb
 FPS=60
 class Player(pygame.sprite.Sprite):
 
-    def __init__(self, id, x, y, controls, color):
+    def __init__(self, id, x, y, controls, color, game_mode="ONE_LIFE"):
         super().__init__()  # 调用父类初始化
         self.id = id
         self.image = pygame.Surface((54, 61))  # 或使用实际图像
@@ -22,11 +25,15 @@ class Player(pygame.sprite.Sprite):
         self.status = "free"
         self.alive = True
         
+        # 游戏模式
+        self.game_mode = game_mode  # "POINT" 或 "ONE_LIFE"
+        self.invincible_frames = 0  # 无敌帧数
+        
         # 锚点坐标，用于画阴影碰撞框
 
         self.feet_x = x+14
         self.feet_y = y+50
-        # 阴影矩形碰撞框（中心不变，左右各缩3像素）
+        # 阴影矩形碰撞框
         self.feet_rect = pygame.Rect(self.feet_x, self.feet_y, 24, 10)
 
         # 泡泡属性
@@ -42,7 +49,7 @@ class Player(pygame.sprite.Sprite):
         self.score = 0
         self.powerups = {}
         self.cooldown = 0
-        self.bombs_active = [b for b in self.bombs_active if not b.exploded]
+        self.bombs_active = []
 
         # 加载各个方向的图像
         self.images = {
@@ -75,27 +82,42 @@ class Player(pygame.sprite.Sprite):
         except pygame.error as e:
             print(f"无法加载玩家图片: {e}")
 
+    def update(self):
+        """更新玩家内部状态（每帧调用）"""
+        if not self.alive:
+            self._die()
+        self._update_player_bomb_cooldown()
+
+    def ifInExplosion(self, explosion_rects):
+        if explosion_rects is None:
+            return False
+        for rect in explosion_rects:
+            if self.feet_rect.colliderect(rect):
+                return True
+        return False
+
+    def _die(self):
     
-    def gotkilled(self):
         self.kill()
         print(f"玩家{self.id}被炸死了")
 
-    def hit_by_bomb(self):
-        self.alive = False
-        self.status = "dead"
+    def hit_by_bomb(self, gamemode):
         # 或使用实际图像
-        self.image = pygame.Surface((54, 61))  
-        # 临时填充白色
-        self.image.fill((255, 0, 0))  
-        self.gotkilled()
+        if gamemode == "ONE_LIFE":
+            self.image = pygame.Surface((54, 61))  
+            # 临时填充白色
+            self.image.fill((255, 0, 0))  
+            self.alive = False
+            self.status = "dead"
+            self._die()
 
 
-    def update_player_bomb_cooldown(self):
+    def _update_player_bomb_cooldown(self):
         if self.bomb_cooldown > 0:
             self.bomb_cooldown -= 1
 
 
-    def handle_bomb_group(self, bombs_group):
+    def handle_bomb_group(self, bombs_group,map_obj):
         # 检查当前想激活的泡泡是否合法，移除已经爆炸的泡泡
         self.bombs_active = [b for b in self.bombs_active if not b.exploded]
         if len(self.bombs_active) >= self.max_bombs:
@@ -108,20 +130,20 @@ class Player(pygame.sprite.Sprite):
             if bomb.rect.x == x and bomb.rect.y == y:
                 return None
 
-        bomb_new=Bomb(x,y,self.bomb_power)
+        bomb_new=Bomb(x,y,self.bomb_power,map_obj=map_obj)
         self.bombs_active.append(bomb_new)
         #合法的泡泡添加进容器
         bombs_group.add(bomb_new)
         #放下泡泡，开始冷却
         self.bomb_cooldown = self.bomb_cooldown_max
-
         return bomb_new
 
-    def place_bomb(self, bombs_group):
+    def place_bomb(self, bombs_group,map_obj):
         """按键长按检测版：按下就尝试放置炸弹"""
         keys = pygame.key.get_pressed()
         if keys[self.controls["shift"]] and self.bomb_cooldown <= 0:
-            self.handle_bomb_group(bombs_group)
+            self.handle_bomb_group(bombs_group,map_obj)
+
 
     def move(self, dx, dy,collision_rects):
         # 记录坐标
@@ -158,14 +180,34 @@ class Player(pygame.sprite.Sprite):
         self.feet_rect.topleft = (self.feet_x, self.feet_y)
         if moved:
             for rect in collision_rects:
-                if self.feet_rect.colliderect(rect):
-                    # 碰到障碍则回退到旧位置
-                    #贴图位置
-                    self.rect.x, self.rect.y = old_x, old_y
-                    #阴影位置
-                    self.feet_x, self.feet_y = old_feet_x, old_feet_y
-                    self.feet_rect.topleft = (self.feet_x, self.feet_y)
+                #老的障碍判断逻辑，弃用
+                #if self.feet_rect.colliderect(rect):
+                if self._if_in_collision(rect, old_feet_x, old_feet_y):
+                    self._revert_move(old_x, old_y, old_feet_x, old_feet_y)
                     break
+
+   
+    def _if_in_collision(self,rect, old_feet_x, old_feet_y):
+        # 检查玩家之前是否在障碍内
+        old_feet_rect = pygame.Rect(old_feet_x, old_feet_y, 24, 10)
+        if old_feet_rect.colliderect(rect):
+            # 玩家之前在障碍内，可以自由移动（包括出去）
+            return False
+        
+        # 玩家之前在障碍外，检查当前位置是否要进入障碍
+        if self.feet_rect.colliderect(rect):
+            # 玩家要进入障碍，阻止移动
+            return True
+        
+        # 玩家既不在障碍内，也不进入障碍，可以移动
+        return False
+
+
+    def _revert_move(self,old_x,old_y,old_feet_x,old_feet_y):
+        #遇到障碍，移动回滚
+         self.rect.x, self.rect.y = old_x, old_y
+         self.feet_x, self.feet_y = old_feet_x, old_feet_y
+         self.feet_rect.topleft = (self.feet_x, self.feet_y)
 
     def draw(self, window):
         #先渲染阴影
@@ -188,7 +230,7 @@ class Player(pygame.sprite.Sprite):
 #            pygame.draw.rect(window, (255, 0, 0), (self.rect.x, self.rect.y, 54, 61), 1)
             # 阴影框
             pygame.draw.rect(window, (0, 255, 0), self.feet_rect, 1)
-
+    
 
     def load_sprite(self, width, height):
         # 此方法已废弃，无需使用

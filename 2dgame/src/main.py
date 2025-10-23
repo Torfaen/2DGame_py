@@ -8,7 +8,7 @@ import json
 WINDOW_WIDTH = 800
 WINDOW_HEIGHT = 600
 DEBUG_MODE= False
-GAMEMODE="POINT"
+GAMEMODE=["POINT","ONE_LIFE"]
 #------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # 地图测试区
 # 定义地图数据
@@ -80,13 +80,17 @@ def main():
         "shift": pygame.K_LSHIFT
     }
 
+    # 设置游戏模式（可以从配置或用户选择）
+    current_game_mode = "ONE_LIFE"  # 或 "ONE_LIFE"
+    
     player = Player(
         id=1,
         x=400,
         y=300,
         controls=player_controls,
         #读取贴图错误时使用红方块代替
-        color=(255, 0, 0)  # 红色
+        color=(255, 0, 0),  # 红色
+        game_mode=current_game_mode
     )
 
     player2 = Player(
@@ -95,7 +99,8 @@ def main():
         y=100,
         controls=player2_controls,
         #读取贴图错误时使用红方块代替
-        color=(255, 0, 0)  # 红色
+        color=(255, 0, 0),  # 红色
+        game_mode=current_game_mode
     )
     # 创建炸弹组
     bombs_group = pygame.sprite.Group()
@@ -119,15 +124,21 @@ def main():
                     DEBUG_MODE = not DEBUG_MODE
         # 更新玩家移动
         for player_obj in players_group:
+            #玩家动作
             player_obj.move(0, 0, map_obj.collision_rects)
-            player_obj.place_bomb(bombs_group)
-            player_obj.update_player_bomb_cooldown()
+            player_obj.place_bomb(bombs_group,map_obj)
+            #玩家状态
+            player_obj.update()
         # 泡泡列表信息更新
         for bomb in list(bombs_group):
             bomb.handle_bomb_exploded()
              # 处理爆炸逻辑
             if bomb.exploded and bomb.explosion_timer >= 29 and not bomb.explosion_handled:  # 刚爆炸时且未处理过
-                bomb.handle_explosion(map_obj, bombs_group,players_group)
+                bomb.handle_explosion(bombs_group,players_group)
+
+            for player_obj in players_group:
+                if player_obj.ifInExplosion(bomb.explosion_rect):
+                    player_obj.hit_by_bomb(current_game_mode)
 
         '''
         # 碰撞系统调试
@@ -190,7 +201,7 @@ def main():
                 p.draw(window)
             elif kind == "bomb":
                 _, bomb_obj, _, _, _ = obj
-                bomb_obj.draw_bomb(window, map_obj)  # 传入地图对象用于爆炸范围计算
+                bomb_obj.draw(window)  # 传入地图对象用于爆炸范围计算
             # 绘制地图碰撞框
             #map_obj.draw_debug_rect_floor(window,DEBUG_MODE)
             map_obj.draw_debug_rect_barrier(window, DEBUG_MODE)
