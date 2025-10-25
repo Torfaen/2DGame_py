@@ -90,6 +90,7 @@ def main():
         controls=player_controls,
         #读取贴图错误时使用红方块代替
         color=(255, 0, 0),  # 红色
+        sprite_name="player2_sprite",
         game_mode=current_game_mode
     )
 
@@ -100,6 +101,7 @@ def main():
         controls=player2_controls,
         #读取贴图错误时使用红方块代替
         color=(255, 0, 0),  # 红色
+        sprite_name="player1_sprite",
         game_mode=current_game_mode
     )
     # 创建炸弹组

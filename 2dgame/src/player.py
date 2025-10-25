@@ -7,7 +7,7 @@ from bomb import Bomb
 FPS=60
 class Player(pygame.sprite.Sprite):
 
-    def __init__(self, id, x, y, controls, color, game_mode="ONE_LIFE"):
+    def __init__(self, id, x, y, controls, color,sprite_name, game_mode="ONE_LIFE"):
         super().__init__()  # 调用父类初始化
         self.id = id
         self.image = pygame.Surface((54, 61))  # 或使用实际图像
@@ -20,6 +20,8 @@ class Player(pygame.sprite.Sprite):
         self.direction = "down"
         self.tile_size = 32
 
+        # 角色模型
+        self.sprite_name=sprite_name
         # 核心属性
         self.speed = 4
         self.status = "free"
@@ -71,7 +73,8 @@ class Player(pygame.sprite.Sprite):
 
         #加载玩家贴图,后续版本改为传参形式选角色
         try:
-            base_path = os.path.join("..", "assets", "sprites", "player", "player2_sprite")
+            player_sprite_num=sprite_name
+            base_path = os.path.join("..", "assets", "sprites", "player", player_sprite_num)
             for direction in self.images.keys():
                 image_path = os.path.join(base_path, f"{direction}.png")
                 if os.path.exists(image_path):
