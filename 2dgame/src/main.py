@@ -204,12 +204,12 @@ def main():
             elif kind == "bomb":
                 _, bomb_obj, _, _, _ = obj
                 bomb_obj.draw(window)  # 传入地图对象用于爆炸范围计算
-            # 绘制地图碰撞框
-            #map_obj.draw_debug_rect_floor(window,DEBUG_MODE)
+
+        # 绘制调试信息（在绘制完所有游戏对象之后，避免在循环内重复绘制）
+        if DEBUG_MODE:
             map_obj.draw_debug_rect_barrier(window, DEBUG_MODE)
             map_obj.draw_debug_barrier_coords(window, DEBUG_MODE)  # 显示barrier坐标
             map_obj.draw_debug_rect_collision(window, DEBUG_MODE)
-
             for player_obj in players_group:
                 player_obj.draw_debug_rect(window, DEBUG_MODE)
 

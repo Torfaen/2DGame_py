@@ -1,10 +1,8 @@
 import pygame
 import os
-
-from pygame.examples.grid import TILE_SIZE
-
 from bomb import Bomb
 FPS=60
+TILE_SIZE = 32
 class Player(pygame.sprite.Sprite):
 
     def __init__(self, id, x, y, controls, color,sprite_name, game_mode="ONE_LIFE"):
@@ -31,13 +29,13 @@ class Player(pygame.sprite.Sprite):
         self.game_mode = game_mode  # "POINT" 或 "ONE_LIFE"
         self.invincible_frames = 0  # 无敌帧数
         
-        # 锚点坐标，用于画阴影碰撞框
+        # 锚点坐标，用于判定在哪个格子
 
-        self.feet_x = x+14
-        self.feet_y = y+50
+        self.feet_x = x + 26
+        self.feet_y = y + 56
         # 阴影矩形碰撞框
         self.feet_rect = pygame.Rect(self.feet_x, self.feet_y, 24, 10)
-
+        self.hit_box=None
         # 泡泡属性
         self.max_bombs = 100
         self.bomb_power = 6
@@ -85,19 +83,36 @@ class Player(pygame.sprite.Sprite):
         except pygame.error as e:
             print(f"无法加载玩家图片: {e}")
 
+    def _get_feetgrid_position(self):
+        # 根据玩家锚点，获取当前格子坐标，向下取整
+        # 例子：只要grid_x坐标在1-2内，那么grid_x则取1，以便绘制整个格子
+        grid_x = int(self.feet_x // TILE_SIZE)
+        grid_y = int(self.feet_y // TILE_SIZE)
+        return grid_x, grid_y
+
+    def _update_player_hitbox(self):
+        # 更新玩家碰撞框
+        grid_x, grid_y = self._get_feetgrid_position()
+        x=grid_x * TILE_SIZE
+        y=grid_y * TILE_SIZE
+        self.hit_box = pygame.Rect(x,y,TILE_SIZE, TILE_SIZE)
+
     def update(self):
         """更新玩家内部状态（每帧调用）"""
         if not self.alive:
             self._die()
         self._update_player_bomb_cooldown()
+        self._update_player_hitbox()
 
     def ifInExplosion(self, explosion_rects):
-        if explosion_rects is None:
+        if not explosion_rects:
             return False
-        for rect in explosion_rects:
-            if self.feet_rect.colliderect(rect):
-                return True
-        return False
+        else:
+            for rect in explosion_rects:
+                rect_pixel=pygame.Rect(rect.x*TILE_SIZE,rect.y*TILE_SIZE,TILE_SIZE,TILE_SIZE)
+                if self.hit_box.colliderect(rect_pixel):
+                    return True
+            return False
 
     def _die(self):
     
@@ -125,10 +140,14 @@ class Player(pygame.sprite.Sprite):
         self.bombs_active = [b for b in self.bombs_active if not b.exploded]
         if len(self.bombs_active) >= self.max_bombs:
             return None
+        '''老炸弹放置逻辑，弃用
         # round固定泡泡坐标在格子中心
         x = round(self.feet_rect.centerx // self.tile_size) * self.tile_size
         y = round(self.feet_rect.centery // self.tile_size) * self.tile_size
-
+        '''
+        grid_x,grid=self._get_feetgrid_position()
+        x=grid_x * TILE_SIZE
+        y=grid * TILE_SIZE
         for bomb in self.bombs_active:
             if bomb.rect.x == x and bomb.rect.y == y:
                 return None
@@ -215,10 +234,10 @@ class Player(pygame.sprite.Sprite):
     def draw(self, window):
         #先渲染阴影
         if self.image_shadow:
-            # 阴影绘制在脚下
-            shadow_x = self.feet_x
-            shadow_y = self.feet_y
-            window.blit(self.image_shadow, (shadow_x, shadow_y))
+            # 阴影绘制在脚下，以锚点为中心
+            shadow_rect = self.image_shadow.get_rect()  # 获取阴影图片的rect
+            shadow_rect.center = (self.feet_x, self.feet_y)  # 设置中心点在锚点
+            window.blit(self.image_shadow, shadow_rect.topleft)  # 使用左上角坐标绘制
         # 渲染人物，使人物踩在影子上
         if self.images and self.direction in self.images and self.images[self.direction]:
             window.blit(self.images[self.direction], (self.rect.x, self.rect.y))
@@ -231,8 +250,12 @@ class Player(pygame.sprite.Sprite):
         if DEBUG_MODE:
             #人物贴图框
 #            pygame.draw.rect(window, (255, 0, 0), (self.rect.x, self.rect.y, 54, 61), 1)
+            # 角色hitbox框
+            pygame.draw.rect(window, (0, 255, 0), self.hit_box, 1)
+            # 角色hitbox锚点
+            pygame.draw.circle(window, (0, 255, 0), (self.feet_x, self.feet_y), 5)
             # 阴影框
-            pygame.draw.rect(window, (0, 255, 0), self.feet_rect, 1)
+            #pygame.draw.rect(window, (0, 255, 0), self.feet_rect, 1)
     
 
     def load_sprite(self, width, height):

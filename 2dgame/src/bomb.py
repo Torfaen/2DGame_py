@@ -201,12 +201,11 @@ class Bomb(pygame.sprite.Sprite):
                     #explosion_area.append((check_x, check_y))  # 障碍物位置也算在爆炸范围内
                     break
                 #爆炸区域像素xy坐标以及rect
-                explosion_rect = pygame.Rect(check_x * TILE_SIZE, check_y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
-                self.explosion_area.append(explosion_rect)
+                self.explosion_area.append(pygame.Rect(check_x * TILE_SIZE, check_y * TILE_SIZE, TILE_SIZE, TILE_SIZE))
                 #格子坐标
                 explosion_area.append((check_x, check_y))
-                #创建爆炸区域rect（像素坐标）
-                self.explosion_rect.append(explosion_rect)
+                #创建爆炸区域rect
+                self.explosion_rect.append(pygame.Rect(check_x, check_y, TILE_SIZE, TILE_SIZE))
         #print("爆炸范围：", explosion_area)
         return explosion_area
 

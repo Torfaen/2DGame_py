@@ -92,10 +92,8 @@ class Map:
                 self._debug_coord_text_rects_cache = {}
                 self._debug_coord_frame_counter = 0
             
-            # 每5帧只更新一次，大幅减少绘制频率
-            self._debug_coord_frame_counter += 1
-            if self._debug_coord_frame_counter % 5 != 0:
-                return
+            # 每5帧只渲染一次（但不清空已渲染的文字）
+            # 不使用return，让已经渲染的文字保留
             
 
             for rect in self.barrier_rects:
