@@ -1,8 +1,9 @@
 import pygame
 import os
-
-TILE_SIZE=32
-FPS=60
+from config_loader import load_config, dict_controls
+config=load_config()
+TILE_SIZE=config["windows"]["tile_size"]
+FPS=config["windows"]["fps"]
 #爆炸区域类，一个类对象对应一个爆炸区域，main函数创建一个group存储所有爆炸区域
 class Explosion(pygame.sprite.Sprite):
     def __init__(self, x, y, power):

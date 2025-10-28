@@ -1,27 +1,38 @@
 import pygame
 import os
 from bomb import Bomb
-FPS=60
-TILE_SIZE = 32
+
+from config_loader import load_config
+config=load_config()
+
+FPS=config["windows"]["fps"]
+TILE_SIZE=config["windows"]["tile_size"]
+
 class Player(pygame.sprite.Sprite):
 
-    def __init__(self, id, x, y, controls, color,sprite_name, game_mode="ONE_LIFE"):
+    def __init__(self, id, x, y, controls, color,sprite_name,speed,speed_max,bombs_count,bombs_max,bomb_power,bomb_power_max, game_mode="ONE_LIFE"):
         super().__init__()  # 调用父类初始化
         self.id = id
         self.image = pygame.Surface((54, 61))  # 或使用实际图像
         self.image.fill(color)  # 临时填充颜色
         self.rect = self.image.get_rect()
+        #出生点
         self.rect.x = x
         self.rect.y = y
+
         self.controls = controls
         self.color = color
         self.direction = "down"
-        self.tile_size = 32
-
         # 角色模型
         self.sprite_name=sprite_name
-        # 核心属性
-        self.speed = 4
+        # 核心属性,道具改变
+        self.speed = speed
+        self.speed_max = speed_max
+        self.bombs_count = bombs_count
+        self.bombs_max = bombs_max
+        self.bomb_power = bomb_power
+        self.bomb_power_max = bomb_power_max
+
         self.status = "free"
         self.alive = True
         
@@ -36,18 +47,13 @@ class Player(pygame.sprite.Sprite):
         # 阴影矩形碰撞框
         self.feet_rect = pygame.Rect(self.feet_x, self.feet_y, 24, 10)
         self.hit_box=None
-        # 泡泡属性
-        self.max_bombs = 100
-        self.bomb_power = 6
         #泡泡冷却
         self.bomb_cooldown = 0
         # 0.2 秒冷却，60 FPS * 0.2 = 12 帧
         self.bomb_cooldown_max = FPS*0.25
         # 泡泡列表
         self.bombs_active = []
-        self.invincible_timer = 0
-        self.score = 0
-        self.powerups = {}
+
         self.cooldown = 0
         self.bombs_active = []
 
@@ -71,8 +77,7 @@ class Player(pygame.sprite.Sprite):
 
         #加载玩家贴图,后续版本改为传参形式选角色
         try:
-            player_sprite_num=sprite_name
-            base_path = os.path.join("..", "assets", "sprites", "player", player_sprite_num)
+            base_path = os.path.join("..", "assets", "sprites", "player", sprite_name)
             for direction in self.images.keys():
                 image_path = os.path.join(base_path, f"{direction}.png")
                 if os.path.exists(image_path):
@@ -138,7 +143,7 @@ class Player(pygame.sprite.Sprite):
     def handle_bomb_group(self, bombs_group,map_obj):
         # 检查当前想激活的泡泡是否合法，移除已经爆炸的泡泡
         self.bombs_active = [b for b in self.bombs_active if not b.exploded]
-        if len(self.bombs_active) >= self.max_bombs:
+        if len(self.bombs_active) >= self.bombs_max:
             return None
         '''老炸弹放置逻辑，弃用
         # round固定泡泡坐标在格子中心

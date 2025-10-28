@@ -1,8 +1,10 @@
 # 在 map.py 文件中创建 Map 类
 import pygame
 import os
-WINDOW_WIDTH = 800
-WINDOW_HEIGHT = 600
+from config_loader import load_config
+config=load_config()
+
+TILE_SIZE=config["windows"]["tile_size"]
 
 import pygame
 import os
