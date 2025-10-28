@@ -172,7 +172,7 @@ class Player(pygame.sprite.Sprite):
             self.handle_bomb_group(bombs_group,map_obj)
 
 
-    def move(self, dx, dy,collision_rects):
+    def move(self,collision_rects):
         # 记录坐标
         old_x, old_y = self.rect.x, self.rect.y
         old_feet_x, old_feet_y = self.feet_x, self.feet_y

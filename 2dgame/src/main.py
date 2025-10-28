@@ -157,7 +157,7 @@ def main():
         # 更新玩家移动
         for player_obj in players_group:
             #玩家动作
-            player_obj.move(0, 0, map_obj.collision_rects)
+            player_obj.move(map_obj.collision_rects)
             player_obj.place_bomb(bombs_group,map_obj)
             #玩家状态
             player_obj.update()
