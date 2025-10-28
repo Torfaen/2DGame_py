@@ -1,0 +1,79 @@
+windows:
+  title: "Player Movement Test"
+  window:
+    width: 800
+    height: 600
+  fps: 60
+  tile_size: 32
+
+  debug:
+    DEBUG_MODE: false
+    toggle_key: "K_1"   # 用名称映射到 pygame 常量
+
+game:
+  modes_allowed: ["POINT", "ONE_LIFE"]
+  current_mode: "ONE_LIFE"
+
+assets:
+  base_dir: ".."
+  maps:
+    floor: "map/floor_map.json"
+    barrier: "map/barrier_map.json"
+    collision: "map/collision_map.json"
+  sprites_path:
+    player_1: "player/player1_sprite"
+    player_2: "player/player2_sprite"
+    player_3: "player/player3_sprite"
+    player_4: "player/player4_sprite"
+    player_5: "player/player5_sprite"
+  sprites_name:
+    player_1: "player1_sprite"
+    player_2: "player2_sprite"
+    player_3: "player3_sprite"
+    player_4: "player4_sprite"
+
+
+    # 可继续扩展
+
+map:
+  active_id: "map1"
+  tile_size_override: null  # 若要覆盖 Map 内默认 tile 大小
+
+players:
+  - id: 0
+    spawn: { x: 400, y: 300 }
+    color: [255, 0, 0]
+    controls:
+        up: "K_UP"
+        down: "K_DOWN"
+        left: "K_LEFT"
+        right: "K_RIGHT"
+        shift: "K_RSHIFT"
+    #速度
+    speed: 5
+    speed_max: 10
+    #泡泡数量
+    bomb_count: 2
+    bomb_max: 8
+    #泡泡强度
+    bomb_power: 1
+    bomb_power_max: 8
+
+  - id: 1
+    spawn: { x: 200, y: 100 }
+    color: [255, 0, 0]
+    controls:
+        up: "K_w"
+        down: "K_s"
+        left: "K_a"
+        right: "K_d"
+        shift: "K_LSHIFT"
+    #速度
+    speed: 5
+    speed_max: 10
+    #泡泡数量
+    bomb_count: 1
+    bomb_max: 8
+    #泡泡强度
+    bomb_power: 3
+    bomb_power_max: 8
