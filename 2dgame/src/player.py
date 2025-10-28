@@ -126,7 +126,7 @@ class Player(pygame.sprite.Sprite):
 
     def hit_by_bomb(self, gamemode):
         # 或使用实际图像
-        if gamemode == "ONE_LIFE":
+        if gamemode == config["game"]["modes_allowed"][1]:
             self.image = pygame.Surface((54, 61))  
             # 临时填充白色
             self.image.fill((255, 0, 0))  
