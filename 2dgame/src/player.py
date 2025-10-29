@@ -25,6 +25,7 @@ class Player(pygame.sprite.Sprite):
         self.direction = "down"
         # 角色模型
         self.sprite_name=sprite_name
+        self.frameIndex=0
         # 核心属性,道具改变
         self.speed = speed
         self.speed_max = speed_max
@@ -74,12 +75,11 @@ class Player(pygame.sprite.Sprite):
         except (pygame.error, FileNotFoundError) as e:
             print(f"警告：无法加载阴影图片 ({e})")
             self.image_shadow = None
-
         #加载玩家贴图,后续版本改为传参形式选角色
         try:
             base_path = os.path.join("..", "assets", "sprites", "player", sprite_name)
             for direction in self.images.keys():
-                image_path = os.path.join(base_path, f"{direction}.png")
+                image_path = os.path.join(base_path, f"{direction}_{self.frameIndex}.png")
                 if os.path.exists(image_path):
                     self.images[direction] = pygame.image.load(image_path)
                     self.images[direction] = pygame.transform.scale(self.images[direction], (54, 61))
@@ -108,6 +108,9 @@ class Player(pygame.sprite.Sprite):
             self._die()
         self._update_player_bomb_cooldown()
         self._update_player_hitbox()
+    def _update_frameIndex(self):
+        
+        self.frameIndex+=1
 
     def ifInExplosion(self, explosion_rects):
         if not explosion_rects:
@@ -133,7 +136,6 @@ class Player(pygame.sprite.Sprite):
             self.alive = False
             self.status = "dead"
             self._die()
-
 
     def _update_player_bomb_cooldown(self):
         if self.bomb_cooldown > 0:

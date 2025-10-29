@@ -8,18 +8,6 @@ def load_config():
     with open(config_path, 'r', encoding='utf-8') as f:
         return yaml.safe_load(f)
 
-def key_to_pygame(key_name:str):
-    if isinstance(key_name, str):
-        return key_name
-    name=key_name.strip()
-    if not name.startswith("K_"):
-        raise ValueError(f"Invalid key name: {key_name}")
-    try:
-        return getattr(pygame.K, name)
-
-    except AttributeError:
-        raise ValueError(f"Invalid key name: {key_name}") from e
-
 def dict_controls(controls_cfg):
     result = {}
     for key, value in controls_cfg.items():

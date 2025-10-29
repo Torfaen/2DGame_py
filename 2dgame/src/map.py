@@ -39,6 +39,8 @@ class Map:
         self.collision_rects = []  # 存储所有障碍物的碰撞框
         self.barrier_rects = []
         self.floor_rects=[]
+        # 爆炸摧毁的方块列表
+        self.destroyed_blocks = []
         # 贴图字典，用于自动加载文件夹内贴图,全部存入 self.tiles
         self.tiles = {}
         tiles_path = os.path.join("..", "assets", "sprites", "background","map_base")
@@ -62,7 +64,11 @@ class Map:
         # 水 (32,32) - 32x32
         self.water = sprite_sheet.get_sprite(32, 32, 32, 32)
     '''
-
+    def get_size(self):
+        x_size_grid=self.barrier_map[0].length
+        y_size_grid=self.barrier_map.length
+        return x_size_grid,y_size_grid
+        
     def draw_debug_rect_floor(self, window, debug_mode):
         if not debug_mode:
             return
@@ -150,12 +156,12 @@ class Map:
                 self.barrier_rects.append(rect)
 
     #障碍物破坏部分函数
-    def remove_barrier(self, x, y):
+    def remove_barrier(self, grid_x, grid_y):
         #二维数组索引，先行后列y 表示行号（垂直方向）x 表示列号（水平方向）
-        old_obj_name=self.barrier_map[y][x]
-        self.barrier_map[y][x] = "empty"
+        old_obj_name=self.barrier_map[grid_y][grid_x]
+        self.barrier_map[grid_y][grid_x] = "empty"  
         # 移除对应的碰撞框
-        target_rect = pygame.Rect(x * self.tile_size, y * self.tile_size, 
+        target_rect = pygame.Rect(grid_x * self.tile_size, grid_y * self.tile_size, 
                                 self.tile_size, self.tile_size)
         self.barrier_rects = [rect for rect in self.barrier_rects 
                             if not rect.collidepoint(target_rect.center)]

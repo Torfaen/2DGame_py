@@ -1,14 +1,18 @@
 import os
 import pygame
 from player import Player
-from map import  Map
+from map import  TILE_SIZE, Map
 from bomb import Bomb
 import json
 from config_loader import load_config, dict_controls
+from explosion import Explosion
+config=load_config()
+TILE_SIZE=config["windows"]["tile_size"]
 
 #“输入→更新→碰撞/爆炸→伤害→渲染”的顺序执行
 class GameManager:
     def __init__(self, config):
+        self.destroyed_blocks =[]
         self.config = config
         self.map_obj = None
         self.player = None
@@ -16,6 +20,7 @@ class GameManager:
         self.bomb = None
         self.bombs_group = None
         self.players_group = None
+        self.explosions_group = None
         self.clock = None
         self.window = None
         self.running = True
@@ -126,20 +131,22 @@ class GameManager:
         self.players_group.add(self.player)
         self.players_group.add(self.player2)
         self.bombs_group = pygame.sprite.Group()
-
+        self.explosions_group = pygame.sprite.Group()
         self.alive_count = len(self.players_group)
 
     def run(self):
         while self.running:
             self.clock.tick(self.config['windows']['fps'])
             self._handle_events()
-            self._update()
+            self.update()
             self._render()
             pygame.display.update()
         pygame.quit()
+
     def _handle_draw_obj(self):
         drawables = []
         # 把地图物件加入列表
+        drawables_explosions = []
         for y in range(len(self.map_obj.barrier_map)):
             for x in range(len(self.map_obj.barrier_map[y])):
                 if self.map_obj.barrier_map[y][x] == "empty":
@@ -156,10 +163,18 @@ class GameManager:
         # 加入泡泡
         for bomb in self.bombs_group:
             drawables.append(("bomb", bomb, bomb.rect.x, bomb.rect.y, bomb.rect.y))
+        # 加入爆炸区域
+        for explosion in self.explosions_group:
+            drawables.append(("explosion", explosion, explosion.rect.x, explosion.rect.y, explosion.rect.y))
         # 按 feet_y 排序 
         drawables.sort(key=lambda obj: obj[4])
         return drawables
+
     def _draw_sorted_obj(self,drawables):
+        for obj in drawables:
+            if obj[0] == "explosion":
+                _, explosion, x, y, _ = obj
+                explosion.draw(self.window)
         for obj in drawables:
             now_obj = obj
             kind = obj[0]
@@ -201,27 +216,123 @@ class GameManager:
             player_obj.place_bomb(self.bombs_group,self.map_obj)
             #玩家状态
             player_obj.update()
+
     def _update_bomb(self):
         for bomb in list(self.bombs_group):
-            bomb.handle_bomb_exploded()  # 推进炸弹计时和爆炸状态
-            if bomb.exploded and bomb.explosion_timer >= 29 and not bomb.explosion_handled:
-                bomb.handle_explosion(self.bombs_group, self.players_group)  # 处理连锁爆炸和摧毁障碍物
+            # 推进炸弹计时和爆炸状态
+            bomb.update()
+            if bomb.exploded  and  bomb.explosion_handled:
+                # 触发爆炸，创建 Explosion 对象
+                explosion = self.trigger_explosion(bomb)
+                self.explosions_group.add(explosion)
+
+
+    def trigger_explosion(self,bomb):
+        
+        #连锁爆炸，直接设置爆炸状态为True
+        bomb.exploded = True
+        #创建该炸弹的爆炸区域对象
+        bomb.remove_collision(bomb.rect.x, bomb.rect.y)
+        #print("触发爆炸")
+        explosion = Explosion(bomb.rect.x, bomb.rect.y, bomb.power, self.map_obj)
+
+        return explosion
+
+
+    def hit_by_bomb(self, player,gamemode):
+        # 或使用实际图像
+        if gamemode == config["game"]["modes_allowed"][1]:
+            player.alive = False
+            player.status = "dead"
+            player._die()
+
+    def _update_explosion(self):
+        for explosion in list(self.explosions_group):
+            # 爆炸区域信息更新,推进爆炸水柱计时
+            explosion.update()
+            if not explosion.explosion_handled:
+                # 连锁爆炸
+                self._handle_chain_explosion(explosion)
+                self.get_destroy_blocks(explosion)
+                self.destroy_blocks()
+                # 命中玩家判定，玩家会移动，需要每帧判定
+                self._update_hit_explosion()
+
+    def _handle_chain_explosion(self, explosion):
+        # 连锁爆炸，遍历所有炸弹，如果炸弹在爆炸区域内，则触发连锁爆炸
+        for bomb in list(self.bombs_group):
+            if not bomb.exploded:  # 只处理未爆炸的炸弹
+                bomb_grid_x = bomb.rect.x // TILE_SIZE
+                bomb_grid_y = bomb.rect.y // TILE_SIZE
+                
+                if explosion.contains(bomb_grid_x, bomb_grid_y):
+                    # 触发连锁爆炸
+                    explosion_new=self.trigger_explosion(bomb)
+                    self.explosions_group.add(explosion_new)
+
+    def destroy_blocks(self):
+        for block in self.destroyed_blocks:
+            x_grid,y_grid= block
+            self.map_obj.remove_collision(x_grid, y_grid)
+            self.map_obj.remove_barrier(x_grid, y_grid)
+        self.destroyed_blocks=[]
+            
+    def get_destroy_blocks(self, bomb):
+        #只记录需要摧毁的方块
+        # 转换为格子坐标
+        bomb_grid_x = bomb.rect.x // TILE_SIZE
+        bomb_grid_y = bomb.rect.y // TILE_SIZE
+        
+        #上下左右
+        directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]  
+        #四向遍历
+        for dx, dy in directions:
+            for i in range(1, bomb.power + 1):
+                check_grid_x = bomb_grid_x + dx * i
+                check_grid_y = bomb_grid_y + dy * i                
+                # 边界检查，地图左上角为(0,0),右下角为(len(map_obj.barrier_map[0])-1,len(map_obj.barrier_map)-1)
+                # 若x<0则超左边界，x大于len(map_obj.barrier_map[0])-1则超右边界，
+                # y<0则超上边界，y大于len(map_obj.barrier_map)-1则超下边界
+                if (check_grid_x < 0 or check_grid_x >= len(self.map_obj.barrier_map[0]) or 
+                    check_grid_y < 0 or check_grid_y >= len(self.map_obj.barrier_map)):
+                    # 超出边界，跳出当前方向循环
+                    break  
+                # 障碍物检查
+                if self.map_obj.barrier_map[check_grid_y][check_grid_x] != "empty":
+                    # 遇到障碍物，记录摧毁的方块
+                    self.destroyed_blocks.append((check_grid_x, check_grid_y))
+                    #分离计算与摧毁，不然会造成贯穿摧毁
+                    #self.map_obj.remove_barrier(check_grid_x, check_grid_y)
+                    #self.map_obj.remove_collision(check_grid_x, check_grid_y)
+                    break
+
+    def ifInExplosion(self,player, explosion_rects):
+        if not explosion_rects:
+            return False
+        else:
+            for rect in explosion_rects:
+                rect_pixel=pygame.Rect(rect.x*TILE_SIZE,rect.y*TILE_SIZE,TILE_SIZE,TILE_SIZE)
+                if player.hit_box.colliderect(rect_pixel):
+                    return True
+            return False
+
     def _update_hit_explosion(self):
         # 命中判定：检测玩家是否在爆炸范围内
         for bomb in list(self.bombs_group):
             if bomb.exploded:
                 for player_obj in self.players_group:
+
                     if player_obj.ifInExplosion(bomb.explosion_rect):
                         player_obj.hit_by_bomb(self.CURRENT_GAME_MODE)
                         self.alive_count = len(self.players_group)
-    def _update(self):
+    def update(self):
         '''“输入→更新→碰撞/爆炸→伤害→渲染”的顺序执行'''
         # 更新玩家移动
         self._update_player()
         # 泡泡列表信息更新
         self._update_bomb()
-        # 命中判定：检测玩家是否在爆炸范围内
-        self._update_hit_explosion ()
+        # 爆炸区域信息更新 , 爆炸击中玩家 , 摧毁方块
+        self._update_explosion ()
         # 检查游戏状态
         self._check_game_state()
 

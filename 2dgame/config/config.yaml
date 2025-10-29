@@ -38,6 +38,8 @@ assets:
 map:
   active_id: "map1"
   tile_size_override: null  # 若要覆盖 Map 内默认 tile 大小
+  width:  25
+  height: 20
 
 players:
   - id: 0
@@ -56,7 +58,7 @@ players:
     bomb_count: 2
     bomb_max: 8
     #泡泡强度
-    bomb_power: 1
+    bomb_power: 7
     bomb_power_max: 8
 
   - id: 1
