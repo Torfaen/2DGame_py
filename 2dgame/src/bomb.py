@@ -150,6 +150,8 @@ class Bomb(pygame.sprite.Sprite):
         #处理炸弹状态
         self._update_bomb_status()
 
+
+
     
     def get_explosion_area(self):
         explosion_area = []
@@ -188,88 +190,13 @@ class Bomb(pygame.sprite.Sprite):
                 self.explosion_rect.append(pygame.Rect(check_x, check_y, TILE_SIZE, TILE_SIZE))
         #print("爆炸范围：", explosion_area)
         return explosion_area
-    '''
-    def destroy_blocks_in_explosion(self):
-        explosion_area = []
-        # 转换为格子坐标
-        bomb_x = self.rect.x // TILE_SIZE
-        bomb_y = self.rect.y // TILE_SIZE
-        
-        #上下左右
-        directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]  
-        #四向遍历
-        for dx, dy in directions:
-            for i in range(1, self.power + 1):
-                check_x = bomb_x + dx * i
-                check_y = bomb_y + dy * i                
-                # 边界检查，地图左上角为(0,0),右下角为(len(map_obj.barrier_map[0])-1,len(map_obj.barrier_map)-1)
-                # 若x<0则超左边界，x大于len(map_obj.barrier_map[0])-1则超右边界，
-                # y<0则超上边界，y大于len(map_obj.barrier_map)-1则超下边界
-                if (check_x < 0 or check_x >= len(self.map_obj.barrier_map[0]) or 
-                    check_y < 0 or check_y >= len(self.map_obj.barrier_map)):
-                    # 超出边界，跳出当前方向循环
-                    break  
-                # 障碍物检查
-                if self.map_obj.barrier_map[check_y][check_x] != "empty":
-                    # 遇到障碍物，记录摧毁的方块
-                    self.destroyed_blocks.append((check_x, check_y))
-                    #分离计算与摧毁，不然会造成贯穿摧毁
-                    self.map_obj.remove_barrier(check_x, check_y)
-                    self.map_obj.remove_collision(check_x, check_y)
-                    break
     
-    '''
-
-    '''
-    def handle_explosion(self, bombs_group,players_group):
-        if self.explosion_handled:
-            return  # 已经处理过，避免重复处理
-        self.explosion_handled = True
-        # 获取爆炸范围
-        explosion_area = self.get_explosion_area()
-        # 检查连锁爆炸
-        for bomb in bombs_group:
-            if bomb != self and not bomb.exploded:  # 不是自己且未爆炸
-                bomb_x = bomb.rect.x // TILE_SIZE
-                bomb_y = bomb.rect.y // TILE_SIZE
-                if (bomb_x, bomb_y) in explosion_area:
-                    # 设置立即爆炸
-                    bomb.trigger_explosion()
-        
-        
-        # 弃用，逻辑该时玩家踩上爆炸区域就死，不是只有爆炸瞬间才炸死玩家
-        # 遍历玩家
-        for player in players_group:
-            #遍历爆炸区域中每一单位爆炸矩形
-            for rect in self.explosion_area:
-                if player.feet_rect.colliderect(rect):
-                    player.hit_by_bomb()
-    
-        # 最后摧毁爆炸范围内的障碍物，获取爆炸范围和连锁爆炸的处理要基于原始地图！
-        self.destroy_blocks_in_explosion()
-    '''
     def _update_bomb_status(self):
         self.timer+=1
-
-        #放泡泡到炸之前，3.5秒爆炸
-        if self.timer==FPS*3.4:
-            print("马上爆炸")
         if self.timer >= FPS*3.5 and not self.exploded:
-            #爆炸持续时间,t/FPS=0.5s
-            self.trigger_explosion()
-            self.explosion_handled = True
-            self.kill()
-
-    def trigger_explosion(self):
+            self.exploded = True
         
-        #连锁爆炸，直接设置爆炸状态为True
-        self.exploded = True
-        #创建该炸弹的爆炸区域对象
-        self.remove_collision(self.rect.x, self.rect.y)
-        #print("触发爆炸")
-        explosion = Explosion(self.rect.x, self.rect.y, self.power, self.map_obj)
 
-        return explosion
 
     def draw(self, window):
         if not self.exploded:

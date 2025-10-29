@@ -218,24 +218,24 @@ class GameManager:
             player_obj.update()
 
     def _update_bomb(self):
+        #统一创建explosion对象，避免重复创建
         for bomb in list(self.bombs_group):
             # 推进炸弹计时和爆炸状态
             bomb.update()
-            if bomb.exploded  and  bomb.explosion_handled:
+            if bomb.exploded  and not bomb.explosion_handled:
                 # 触发爆炸，创建 Explosion 对象
+                bomb.explosion_handled = True
                 explosion = self.trigger_explosion(bomb)
+                bomb.kill()
                 self.explosions_group.add(explosion)
 
 
     def trigger_explosion(self,bomb):
         
-        #连锁爆炸，直接设置爆炸状态为True
-        bomb.exploded = True
         #创建该炸弹的爆炸区域对象
         bomb.remove_collision(bomb.rect.x, bomb.rect.y)
-        #print("触发爆炸")
+        #创建爆炸区域对象
         explosion = Explosion(bomb.rect.x, bomb.rect.y, bomb.power, self.map_obj)
-
         return explosion
 
 
@@ -255,6 +255,8 @@ class GameManager:
                 self._handle_chain_explosion(explosion)
                 self.get_destroy_blocks(explosion)
                 self.destroy_blocks()
+                #标记已处理，避免重复处理
+                explosion.explosion_handled = True
                 # 命中玩家判定，玩家会移动，需要每帧判定
                 self._update_hit_explosion()
 
@@ -267,8 +269,7 @@ class GameManager:
                 
                 if explosion.contains(bomb_grid_x, bomb_grid_y):
                     # 触发连锁爆炸
-                    explosion_new=self.trigger_explosion(bomb)
-                    self.explosions_group.add(explosion_new)
+                    bomb.exploded = True
 
     def destroy_blocks(self):
         for block in self.destroyed_blocks:
