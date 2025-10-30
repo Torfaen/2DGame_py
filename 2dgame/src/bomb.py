@@ -195,7 +195,6 @@ class Bomb(pygame.sprite.Sprite):
         self.timer+=1
         if self.timer >= FPS*3.5 and not self.exploded:
             self.exploded = True
-        
 
 
     def draw(self, window):

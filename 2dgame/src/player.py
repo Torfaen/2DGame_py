@@ -149,14 +149,9 @@ class Player(pygame.sprite.Sprite):
         self.bombs_active = [b for b in self.bombs_active if not b.exploded]
         if len(self.bombs_active) >= self.bombs_max:
             return None
-        '''老炸弹放置逻辑，弃用
-        # round固定泡泡坐标在格子中心
-        x = round(self.feet_rect.centerx // self.tile_size) * self.tile_size
-        y = round(self.feet_rect.centery // self.tile_size) * self.tile_size
-        '''
-        grid_x,grid=self._get_feetgrid_position()
-        x=grid_x * TILE_SIZE
-        y=grid * TILE_SIZE
+        grid_x,grid_y=self._get_feetgrid_position()
+        x = grid_x * TILE_SIZE
+        y = grid_y * TILE_SIZE
         for bomb in self.bombs_active:
             if bomb.rect.x == x and bomb.rect.y == y:
                 return None
@@ -175,39 +170,41 @@ class Player(pygame.sprite.Sprite):
         if keys[self.controls["shift"]] and self.bomb_cooldown <= 0:
             self.handle_bomb_group(bombs_group,map_obj)
 
+    def handle_input(self):
+        key = pygame.key.get_pressed()
+        if key[self.controls["left"]]:
+            dx=-self.speed
+            dy=0
+            moved=True
+        elif key[self.controls["right"]]:
+            dx=self.speed
+            dy=0
+            moved=True
+        elif key[self.controls["up"]]:
+            dx=0
+            dy=-self.speed
+            moved=True
+        elif key[self.controls["down"]]:
+            dx=0
+            dy=self.speed
+            moved=True
+        else:
+            dx=0
+            dy=0
+            moved=False
+        return dx,dy,moved
 
-    def move(self,collision_rects):
-        # 记录坐标
+
+    def move(self,dx,dy,moved,collision_rects):
+        # 记录移动前坐标
         old_x, old_y = self.rect.x, self.rect.y
         old_feet_x, old_feet_y = self.feet_x, self.feet_y
-
-        moved= False
-        key = pygame.key.get_pressed()
-
-        if key[self.controls["left"]]:
-            self.rect.x -= self.speed
-            self.feet_x-=self.speed
-            self.direction = "left"
-            moved = True
-
-        elif key[self.controls["right"]]:
-            self.rect.x += self.speed
-            self.feet_x+=self.speed
-            self.direction = "right"
-            moved = True
-
-        elif key[self.controls["up"]]:
-            self.rect.y -= self.speed
-            self.feet_y-=self.speed
-            self.direction = "up"
-            moved = True
-
-        elif key[self.controls["down"]]:
-            self.rect.y += self.speed
-            self.feet_y+=self.speed
-            self.direction = "down"
-            moved = True
-
+        # 模型坐标
+        self.rect.x+=dx
+        self.rect.y+=dy
+        # 锚点坐标
+        self.feet_x+=dx
+        self.feet_y+=dy
         # 同步 feet_rect 位置
         self.feet_rect.center = (self.feet_x, self.feet_y)
         if moved:

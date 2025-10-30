@@ -107,11 +107,10 @@ class Explosion(pygame.sprite.Sprite):
                 window.blit(self.image_end[direction], (grid_x * TILE_SIZE, grid_y * TILE_SIZE, 32, 32 ))
 
     def _calculate_explosion_area(self, map_obj):
-        explosion_area = []
+        
         # 转换为格子坐标
         bomb_grid_x = self.rect.x // TILE_SIZE
         bomb_grid_y = self.rect.y // TILE_SIZE
-        
         self.grids_info.append({"pos":(bomb_grid_x, bomb_grid_y), "direction":"center", "is_end":False})
         #上下左右
         directions = [(0, -1,"up"), (0, 1,"down"), (-1, 0,"left"), (1, 0,"right")]  
