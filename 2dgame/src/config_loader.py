@@ -11,8 +11,9 @@ def load_config():
 def dict_controls(controls_cfg):
     result = {}
     for key, value in controls_cfg.items():
-        # 比如 name 是 "K_w"，转成 pygame.K_w
+        # 比如 value 是 "K_w"，转成 pygame.K_w
         result[key] = getattr(pygame, value)
+    # 全部转换完，返回能直接使用的字典
     return result
 
 '''--------------------测试区域------------------------------------------------------------------------------------------------'''

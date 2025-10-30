@@ -3,12 +3,12 @@ import pygame
 import os
 from explosion import Explosion
 from macholib.ptypes import sizeof
-
 from config_loader import load_config, dict_controls
+
 config=load_config()
 TILE_SIZE=config["windows"]["tile_size"]
 FPS=config["windows"]["fps"]
-#泡泡类，一个类对应多个泡泡对象
+#泡泡类，一个类对象，用于管理一个泡泡
 class Bomb(pygame.sprite.Sprite):
     def __init__(self, x, y, power, color=(173, 216, 230),map_obj=None):
         #基础属性

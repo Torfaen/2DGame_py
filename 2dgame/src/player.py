@@ -93,6 +93,7 @@ class Player(pygame.sprite.Sprite):
         # 例子：只要grid_x坐标在1-2内，那么grid_x则取1，以便绘制整个格子
         grid_x = int(self.feet_x // TILE_SIZE)
         grid_y = int(self.feet_y // TILE_SIZE)
+
         return grid_x, grid_y
 
     def _update_player_hitbox(self):

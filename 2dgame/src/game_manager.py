@@ -1,7 +1,7 @@
 import os
 import pygame
 from player import Player
-from map import  TILE_SIZE, Map
+from map import Map
 from bomb import Bomb
 import json
 from config_loader import load_config, dict_controls
@@ -229,9 +229,8 @@ class GameManager:
                 bomb.kill()
                 self.explosions_group.add(explosion)
 
-
+    # 爆炸类对象，统一由该函数创建，因为炸弹爆炸必定会产生爆炸区域，而爆炸区域在pvp中必定由炸弹产生
     def trigger_explosion(self,bomb):
-        
         #创建该炸弹的爆炸区域对象
         bomb.remove_collision(bomb.rect.x, bomb.rect.y)
         #创建爆炸区域对象
@@ -276,6 +275,7 @@ class GameManager:
             x_grid,y_grid= block
             self.map_obj.remove_collision(x_grid, y_grid)
             self.map_obj.remove_barrier(x_grid, y_grid)
+        #炸完了，需要摧毁的方块列表置空
         self.destroyed_blocks=[]
             
     def get_destroy_blocks(self, bomb):
@@ -284,7 +284,7 @@ class GameManager:
         bomb_grid_x = bomb.rect.x // TILE_SIZE
         bomb_grid_y = bomb.rect.y // TILE_SIZE
         
-        #上下左右
+        #上下左右，四向算法，炸弹威力power与以下方向坐标组相乘，for循环从1格到power格遍历，获得一个炸弹所有爆炸区域的信息
         directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]  
         #四向遍历
         for dx, dy in directions:
@@ -307,25 +307,35 @@ class GameManager:
                     #self.map_obj.remove_collision(check_grid_x, check_grid_y)
                     break
 
-    def ifInExplosion(self,player, explosion_rects):
+    def _ifInExplosion(self,player, explosion_rects):
         if not explosion_rects:
             return False
         else:
             for rect in explosion_rects:
-                rect_pixel=pygame.Rect(rect.x*TILE_SIZE,rect.y*TILE_SIZE,TILE_SIZE,TILE_SIZE)
+                rect_pixel=pygame.Rect(rect.x,rect.y,TILE_SIZE,TILE_SIZE)
                 if player.hit_box.colliderect(rect_pixel):
                     return True
             return False
 
+    def _get_explision_rects(self,explosions):
+        explosions_rects = []
+        for explosion in explosions:
+            for gridxy in explosion.grids_info:
+                grid_x,grid_y=gridxy['pos']
+                explosion.rect=pygame.Rect(grid_x*TILE_SIZE,grid_y*TILE_SIZE,TILE_SIZE,TILE_SIZE)
+                explosions_rects.append(explosion.rect)
+        return explosions_rects
+
     def _update_hit_explosion(self):
         # 命中判定：检测玩家是否在爆炸范围内
-        for bomb in list(self.bombs_group):
-            if bomb.exploded:
-                for player_obj in self.players_group:
+        # 所有的泡泡爆炸区域explosions_rects
+        explosions_rects = self._get_explision_rects(self.explosions_group)
+        for player_obj in self.players_group:
+            if self._ifInExplosion(player_obj,explosions_rects):
+                player_obj.hit_by_bomb(self.CURRENT_GAME_MODE)
+                self.alive_count = len(self.players_group)
 
-                    if player_obj.ifInExplosion(bomb.explosion_rect):
-                        player_obj.hit_by_bomb(self.CURRENT_GAME_MODE)
-                        self.alive_count = len(self.players_group)
+
     def update(self):
         '''“输入→更新→碰撞/爆炸→伤害→渲染”的顺序执行'''
         # 更新玩家移动
