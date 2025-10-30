@@ -46,7 +46,8 @@ class Player(pygame.sprite.Sprite):
         self.feet_x = x + 26
         self.feet_y = y + 56
         # 阴影矩形碰撞框
-        self.feet_rect = pygame.Rect(self.feet_x, self.feet_y, 24, 10)
+        self.feet_rect = pygame.Rect(0, 0, 5, 5)
+        self.feet_rect.center = (self.feet_x, self.feet_y)
         self.hit_box=None
         #泡泡冷却
         self.bomb_cooldown = 0
@@ -179,6 +180,7 @@ class Player(pygame.sprite.Sprite):
         # 记录坐标
         old_x, old_y = self.rect.x, self.rect.y
         old_feet_x, old_feet_y = self.feet_x, self.feet_y
+
         moved= False
         key = pygame.key.get_pressed()
 
@@ -207,7 +209,7 @@ class Player(pygame.sprite.Sprite):
             moved = True
 
         # 同步 feet_rect 位置
-        self.feet_rect.topleft = (self.feet_x, self.feet_y)
+        self.feet_rect.center = (self.feet_x, self.feet_y)
         if moved:
             for rect in collision_rects:
                 #老的障碍判断逻辑，弃用
@@ -219,7 +221,8 @@ class Player(pygame.sprite.Sprite):
    
     def _if_in_collision(self,rect, old_feet_x, old_feet_y):
         # 检查玩家之前是否在障碍内
-        old_feet_rect = pygame.Rect(old_feet_x, old_feet_y, 24, 10)
+        old_feet_rect = pygame.Rect(0, 0, 5, 5)
+        old_feet_rect.center = (old_feet_x, old_feet_y)
         if old_feet_rect.colliderect(rect):
             # 玩家之前在障碍内，可以自由移动（包括出去）
             return False
@@ -237,7 +240,7 @@ class Player(pygame.sprite.Sprite):
         #遇到障碍，移动回滚
          self.rect.x, self.rect.y = old_x, old_y
          self.feet_x, self.feet_y = old_feet_x, old_feet_y
-         self.feet_rect.topleft = (self.feet_x, self.feet_y)
+         self.feet_rect.center = (self.feet_x, self.feet_y)
 
     def draw(self, window):
         #先渲染阴影
