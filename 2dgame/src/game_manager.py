@@ -256,8 +256,8 @@ class GameManager:
                 self.destroy_blocks()
                 #标记已处理，避免重复处理
                 explosion.explosion_handled = True
-                # 命中玩家判定，玩家会移动，需要每帧判定
-                self._update_hit_explosion()
+            # 命中玩家判定，玩家会移动，需要爆炸时每帧判定，不要只在炸弹爆炸时判定
+            self._update_hit_explosion()
 
     def _handle_chain_explosion(self, explosion):
         # 连锁爆炸，遍历所有炸弹，如果炸弹在爆炸区域内，则触发连锁爆炸
@@ -328,6 +328,7 @@ class GameManager:
 
     def _update_hit_explosion(self):
         # 命中判定：检测玩家是否在爆炸范围内
+        # 不要每帧判定，有explosion才判定
         # 所有的泡泡爆炸区域explosions_rects
         explosions_rects = self._get_explision_rects(self.explosions_group)
         for player_obj in self.players_group:
