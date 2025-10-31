@@ -13,7 +13,7 @@ class Player(pygame.sprite.Sprite):
 
     def __init__(self, id, x, y, controls, color,sprite_name,speed,speed_max,bombs_count,bombs_max,bomb_power,bomb_power_max, game_mode="ONE_LIFE"):
         super().__init__()  # 调用父类初始化
-        self.images = None
+        self.images = {}
         self.id = id
         # 玩家贴图
         # 临时填充颜色，后续版本改为传参
@@ -172,9 +172,10 @@ class Player(pygame.sprite.Sprite):
     def update(self):
         """更新玩家内部状态（每帧调用）"""
         if not self.alive:
-            self._die()
+            self.die()
         self._update_player_bomb_cooldown()
         self._update_player_hitbox()
+
     def _update_frameIndex(self):
         
         self.frameIndex+=1
@@ -189,8 +190,7 @@ class Player(pygame.sprite.Sprite):
                     return True
             return False
 
-    def _die(self):
-    
+    def die(self):
         self.kill()
         print(f"玩家{self.id}被炸死了")
 
@@ -202,7 +202,7 @@ class Player(pygame.sprite.Sprite):
             self.image.fill((255, 0, 0))  
             self.alive = False
             self.status = "dead"
-            self._die()
+            self.die()
 
     def _update_player_bomb_cooldown(self):
         if self.bomb_cooldown > 0:

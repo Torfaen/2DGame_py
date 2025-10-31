@@ -2,8 +2,6 @@ from re import S
 import pygame
 import os
 
-from macholib.ptypes import sizeof
-
 from config_loader import load_config, dict_controls
 config=load_config("config.yaml")
 TILE_SIZE=config["windows"]["tile_size"]

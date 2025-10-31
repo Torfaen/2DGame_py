@@ -7,7 +7,7 @@ import json
 
 # 设置窗口，全局参数设置
 from config_loader import load_config, dict_controls
-config=load_config()
+config=load_config("config.yaml")
 
 WINDOW_WIDTH=config['windows']['window']['width']
 WINDOW_HEIGHT=config['windows']['window']['height']

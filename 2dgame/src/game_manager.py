@@ -242,7 +242,7 @@ class GameManager:
         if gamemode == config["game"]["modes_allowed"][1]:
             player.alive = False
             player.status = "dead"
-            player._die()
+            player.die()
 
     def _update_explosion(self):
         for explosion in list(self.explosions_group):
@@ -379,7 +379,7 @@ class GameManager:
         
         # 重新创建玩家并初始化 groups
         self._load_players()  # 里面会调用 _init_groups()
-        
+        self._init_groups()
         # 重置状态
         self.state = "running"
         self.alive_count = len(self.players_group)

@@ -1,7 +1,6 @@
 import pygame
 import os
 
-from pygame.examples.sprite_texture import sprite
 from config_loader import load_config
 config_sprite=load_config("config_sprite.yaml")
 
@@ -66,6 +65,7 @@ def main():
         
 
 if __name__ == "__main__":
-    main()
+    pass
+
 
 #---------------------测试区--------------------------------------------------------------------
