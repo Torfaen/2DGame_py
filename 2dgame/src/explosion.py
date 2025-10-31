@@ -5,7 +5,7 @@ import os
 from macholib.ptypes import sizeof
 
 from config_loader import load_config, dict_controls
-config=load_config()
+config=load_config("config.yaml")
 TILE_SIZE=config["windows"]["tile_size"]
 FPS=config["windows"]["fps"]
 #爆炸区域类，一个类对象对应一个炸弹爆炸产生的爆炸区域，main函数创建一个group存储所有爆炸区域

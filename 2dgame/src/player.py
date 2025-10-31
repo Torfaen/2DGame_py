@@ -1,9 +1,10 @@
 import pygame
 import os
 from bomb import Bomb
-
 from config_loader import load_config
-config=load_config()
+from util import get_sprite
+config=load_config("config.yaml")
+config_sprite=load_config("config_sprite.yaml")
 
 FPS=config["windows"]["fps"]
 TILE_SIZE=config["windows"]["tile_size"]
@@ -12,20 +13,28 @@ class Player(pygame.sprite.Sprite):
 
     def __init__(self, id, x, y, controls, color,sprite_name,speed,speed_max,bombs_count,bombs_max,bomb_power,bomb_power_max, game_mode="ONE_LIFE"):
         super().__init__()  # 调用父类初始化
+        self.images = None
         self.id = id
-        self.image = pygame.Surface((54, 61))  # 或使用实际图像
-        self.image.fill(color)  # 临时填充颜色
+        # 玩家贴图
+        # 临时填充颜色，后续版本改为传参
+        self.color = color
+        self.image = pygame.Surface((54, 61)) 
+        self.image.fill(color) 
         self.rect = self.image.get_rect()
         #出生点
         self.rect.x = x
         self.rect.y = y
-
+        #控制键
         self.controls = controls
-        self.color = color
         self.direction = "down"
+
         # 角色模型
         self.sprite_name=sprite_name
         self.frameIndex=0
+        # 动画库
+ 
+        self.animations=[]
+
         # 核心属性,道具改变
         self.speed = speed
         self.speed_max = speed_max
@@ -55,17 +64,8 @@ class Player(pygame.sprite.Sprite):
         self.bomb_cooldown_max = FPS*0.25
         # 泡泡列表
         self.bombs_active = []
-
         self.cooldown = 0
         self.bombs_active = []
-
-        # 加载各个方向的图像
-        self.images = {
-            "down": None,
-            "up": None,
-            "left": None,
-            "right": None
-        }
 
         #加载阴影贴图
         # 阴影贴图加载
@@ -89,6 +89,71 @@ class Player(pygame.sprite.Sprite):
         except pygame.error as e:
             print(f"无法加载玩家图片: {e}")
 
+    def init_animations(self):
+        mapping=config_sprite["sprites"][f"{self.sprite_name}"]["mapping"]
+        self.animations=self._build_animations(self.sprites,mapping)
+
+    def _load_sprite(self,sprite_name):
+        sprite_info=config_sprite["sprites"][f"{sprite_name}"]
+        #sprite_name: manbo_sprite
+        #路径
+        path=sprite_info["path"]
+        #sprite尺寸大小，一般为32x32
+        tile_size=sprite_info["tile_size"]
+        #sprite行数
+        rows=sprite_info["rows"]
+        #sprite列数
+        cols=sprite_info["cols"]
+        #sprite缩放比例
+        scale=sprite_info["scale"]
+        #sprite帧数
+        frames=sprite_info["frames"]
+        #sprite方向映射，如idle: { row: 0, cols: [0, 1, 2] }，表示idle方向的sprite在第0行，第0、1、2列
+        mapping=sprite_info["mapping"]
+        #获取所有需要的精灵图sprites
+        sprites=get_sprite(path,tile_size,rows,cols,scale)
+        ''' manbo示例，sprites输出为是一个list,其中包含十二个surface对象，即为十二张贴图
+            [<Surface(32x32x32 SW)>, <Surface(32x32x32 SW)>, <Surface(32x32x32 SW)>, 
+            <Surface(32x32x32 SW)>, <Surface(32x32x32 SW)>, <Surface(32x32x32 SW)>, 
+            <Surface(32x32x32 SW)>, <Surface(32x32x32 SW)>, <Surface(32x32x32 SW)>, 
+            <Surface(32x32x32 SW)>, <Surface(32x32x32 SW)>, <Surface(32x32x32 SW)>]
+        '''
+        return sprites
+    #根据mapping，组装动画库，达到下面注释效果  manbo示例
+
+    def _build_animations(self,sprites,mapping):
+        '''animations = {
+                    "idle": [0, 0, 0],
+                    "down": [0, 1, 2],
+                    "left":  [3, 4, 5],
+                    "right": [6, 7, 8],
+                    "up":  [9, 10, 11]
+                    }
+                    数字代表sprites列表的索引号
+                    
+            mapping:
+                idle: { rows: 0, cols: [0, 0, 0] }
+                down: { rows: 0, cols: [0, 1, 2] }
+                left: { rows: 1, cols: [0, 1, 2] }
+                right: { rows: 2, cols: [0, 1, 2] }
+                up: { rows: 3, cols: [0, 1, 2] }
+        }'''
+        animations={}
+        #开始创建一个字典
+        #state输出为dict_keys(['idle','down', 'left', 'right', 'up'])
+        #item函数返回元组(key,value)
+        for state , spec in mapping.items():
+            '''    "down":  [0,1,2] '''
+            rows_idx=spec["rows"]
+            cols_idx =spec["cols"]
+            #创建一个列表，用于存储当前状态动画帧
+            lst=[]
+            for col_idx in cols_idx:
+                lst.append(sprites[rows_idx][col_idx])
+            animations[state]=lst
+        return animations
+
+            
     def _get_feetgrid_position(self):
         # 根据玩家锚点，获取当前格子坐标，向下取整
         # 例子：只要grid_x坐标在1-2内，那么grid_x则取1，以便绘制整个格子

@@ -5,7 +5,7 @@ from explosion import Explosion
 from macholib.ptypes import sizeof
 from config_loader import load_config, dict_controls
 
-config=load_config()
+config=load_config("config.yaml")
 TILE_SIZE=config["windows"]["tile_size"]
 FPS=config["windows"]["fps"]
 #泡泡类，一个类对象，用于管理一个泡泡
@@ -65,23 +65,7 @@ class Bomb(pygame.sprite.Sprite):
         grid_x = x // TILE_SIZE
         grid_y = y // TILE_SIZE
         self.map_obj.remove_collision(grid_x,grid_y)
-
-
-        '''类内初始化贴图，已弃用
-        #加载泡泡贴图
-        try:
-            shadow_path = os.path.join("..", "assets", "sprites", "bomb", "idle_0.png")
-            self.image_bomb = pygame.image.load(shadow_path)
-            #self.image_shadow = pygame.transform.scale(self.image_shadow, (50, 20))  # 按需缩放
-        except (pygame.error, FileNotFoundError) as e:
-            self.image_bomb = pygame.Surface((40, 40), pygame.SRCALPHA)
-            #临时方块贴图
-            #pygame.draw.rect(self.image_bomb, (173, 216, 230), (self.rect.x, self.rect.y, 32, 32))
-            pygame.draw.circle(self.image_bomb, (173, 216, 230), (10, 10), 13)
-            print(f"警告：无法加载泡泡图片 ({e})")
-        '''
-
-
+        
     def _load_explosion_sprite(self,direction,is_end=False):
         size=(32,32)
         # 判断中心

@@ -2,7 +2,7 @@
 import pygame
 import os
 from config_loader import load_config
-config=load_config()
+config=load_config("config.yaml")
 
 TILE_SIZE=config["windows"]["tile_size"]
 

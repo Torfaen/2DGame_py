@@ -5,7 +5,7 @@ from game_manager import GameManager
 
 
 def main():
-    config = load_config()
+    config = config=load_config("config.yaml")
     game = GameManager(config)
     game.init()
     game.run()

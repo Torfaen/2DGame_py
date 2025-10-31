@@ -7,7 +7,7 @@ from bomb import Bomb
 import json
 from config_loader import load_config, dict_controls
 from explosion import Explosion
-config=load_config()
+config=load_config("config.yaml")
 TILE_SIZE=config["windows"]["tile_size"]
 
 #“输入→更新→碰撞/爆炸→伤害→渲染”的顺序执行
@@ -36,6 +36,7 @@ class GameManager:
         self._init_window()
         self._load_maps()
         self._load_players()
+        self._init_groups()
 
     def _init_window(self):
         width = self.config['windows']['window']['width']
@@ -73,7 +74,6 @@ class GameManager:
         player_2_config = self.config['players'][1]
         player_controls = dict_controls(player_1_config['controls'])
         player2_controls = dict_controls(player_2_config['controls'])
-        
         self.player = Player(
             id=player_1_config['id'],
             controls=player_controls,
@@ -109,8 +109,6 @@ class GameManager:
             sprite_name=self.config['assets']['sprites_name']['player_1'],
         )
         
-        # 创建 groups 并添加玩家
-        self._init_groups()
 
     def _load_map_path(self,json_path,map_id):
         """从JSON文件加载地图数据"""

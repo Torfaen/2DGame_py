@@ -3,8 +3,8 @@ import os
 import yaml
 import pygame
 
-def load_config():
-    config_path=os.path.join("..", "config", "config.yaml")
+def load_config(config_name):
+    config_path=os.path.join("..", "config", f"{config_name}")
     with open(config_path, 'r', encoding='utf-8') as f:
         return yaml.safe_load(f)
 
@@ -18,12 +18,7 @@ def dict_controls(controls_cfg):
 
 '''--------------------测试区域------------------------------------------------------------------------------------------------'''
 def main():
-    config=load_config()
-
-    player_1_config = config['players'][0]
-    player_controls = player_1_config['controls']
-    print(f"type(player_controls): {type(player_controls)}")
-    print(f"player_controls: {player_controls}")
+    pass
 
 if __name__ == "__main__":
     main()
