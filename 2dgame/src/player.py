@@ -2,7 +2,9 @@ import pygame
 import os
 from bomb import Bomb
 from config_loader import load_config
-from util import get_sprite
+OFFSET_X = 24
+OFFSET_Y = 56
+
 config=load_config("config.yaml")
 config_sprite=load_config("config_sprite.yaml")
 
@@ -13,50 +15,42 @@ class Player(pygame.sprite.Sprite):
 
     def __init__(self, id, x, y, controls, color,sprite_name,speed,speed_max,bombs_count,bombs_max,bomb_power,bomb_power_max, game_mode="ONE_LIFE"):
         super().__init__()  # 调用父类初始化
-        self.images = {}
+        self.images = {"left":[],"right":[],"up":[],"down":[]}
         self.id = id
+
+        #控制键位
+        self.controls = controls
+        # 贴图相关
         # 玩家贴图
         # 临时填充颜色，后续版本改为传参
         self.color = color
         self.image = pygame.Surface((54, 61)) 
         self.image.fill(color) 
         self.rect = self.image.get_rect()
+        self.height = config_sprite['sprites'][sprite_name]['height']
+        self.width = config_sprite['sprites'][sprite_name]['width']
+
+
         #出生点
         self.rect.x = x
         self.rect.y = y
-        #控制键
-        self.controls = controls
-        self.direction = "down"
 
         # 角色模型
         self.sprite_name=sprite_name
         self.frameIndex=0
+        self.player_frame_counter = 0
+        # 每15帧换一次贴图（60 FPS 下约 4 次/秒）
+        self.ANIMATION_DELAY = 10
         # 动画库
- 
-        self.animations=[]
+        self.direction="down"
+        self.frameMax = config_sprite['sprites'][sprite_name]['frames']
+        self.image_shadow = None
 
         # 核心属性,道具改变
         self.speed = speed
         self.speed_max = speed_max
         self.bombs_count = bombs_count
         self.bombs_max = bombs_max
-        self.bomb_power = bomb_power
-        self.bomb_power_max = bomb_power_max
-
-        self.status = "free"
-        self.alive = True
-        
-        # 游戏模式
-        self.game_mode = game_mode  # "POINT" 或 "ONE_LIFE"
-        self.invincible_frames = 0  # 无敌帧数
-        
-        # 锚点坐标，用于判定在哪个格子
-
-        self.feet_x = x + 26
-        self.feet_y = y + 56
-        # 阴影矩形碰撞框
-        self.feet_rect = pygame.Rect(0, 0, 5, 5)
-        self.feet_rect.center = (self.feet_x, self.feet_y)
         self.hit_box=None
         #泡泡冷却
         self.bomb_cooldown = 0
@@ -67,92 +61,56 @@ class Player(pygame.sprite.Sprite):
         self.cooldown = 0
         self.bombs_active = []
 
+        self.bomb_power = bomb_power
+        self.bomb_power_max = bomb_power_max
+
+        self.status = "free"
+        self.alive = True
+
+        # 游戏模式
+        self.game_mode = game_mode  # "POINT" 或 "ONE_LIFE"
+        self.invincible_frames = 0  # 无敌帧数
+
+        # 锚点坐标，用于判定在哪个格子
+
+        self.feet_x = x + OFFSET_X
+        self.feet_y = y + OFFSET_Y
+        # 阴影矩形碰撞框
+        self.feet_rect = pygame.Rect(0, 0, 5, 5)
+        self.feet_rect.center = (self.feet_x, self.feet_y)
         #加载阴影贴图
         # 阴影贴图加载
+        self._load_sprite()
+        self._load_sprite_shadow()
+    def _load_sprite_shadow(self):
         try:
             shadow_path = os.path.join("..", "assets", "sprites", "background", "map_base", "shadow.png")
             self.image_shadow = pygame.image.load(shadow_path)
-            #self.image_shadow = pygame.transform.scale(self.image_shadow, (50, 20))  # 按需缩放
+            # self.image_shadow = pygame.transform.scale(self.image_shadow, (50, 20))  # 按需缩放
         except (pygame.error, FileNotFoundError) as e:
             print(f"警告：无法加载阴影图片 ({e})")
             self.image_shadow = None
-        #加载玩家贴图,后续版本改为传参形式选角色
+
+    def _load_sprite(self):
+        # 加载玩家贴图,后续版本改为传参形式选角色
+        sprite_name=self.sprite_name
+        images={}
         try:
             base_path = os.path.join("..", "assets", "sprites", "player", sprite_name)
             for direction in self.images.keys():
-                image_path = os.path.join(base_path, f"{direction}_{self.frameIndex}.png")
-                if os.path.exists(image_path):
-                    self.images[direction] = pygame.image.load(image_path)
-                    self.images[direction] = pygame.transform.scale(self.images[direction], (54, 61))
+                if os.path.exists(base_path):
+                    frames=[]
+                    for frameIndex in range(self.frameMax):
+                        image_path = os.path.join(base_path, f"{direction}_{frameIndex}.png")
+                        img=pygame.image.load(image_path).convert_alpha()
+                        frames.append(img)
+                    images[direction]=frames
                 else:
-                    print(f"警告：找不到图片 {image_path}")
+                    print(f"警告：找不到图片 {base_path}")
+            self.images = images
+
         except pygame.error as e:
             print(f"无法加载玩家图片: {e}")
-
-    def init_animations(self):
-        mapping=config_sprite["sprites"][f"{self.sprite_name}"]["mapping"]
-        self.animations=self._build_animations(self.sprites,mapping)
-
-    def _load_sprite(self,sprite_name):
-        sprite_info=config_sprite["sprites"][f"{sprite_name}"]
-        #sprite_name: manbo_sprite
-        #路径
-        path=sprite_info["path"]
-        #sprite尺寸大小，一般为32x32
-        tile_size=sprite_info["tile_size"]
-        #sprite行数
-        rows=sprite_info["rows"]
-        #sprite列数
-        cols=sprite_info["cols"]
-        #sprite缩放比例
-        scale=sprite_info["scale"]
-        #sprite帧数
-        frames=sprite_info["frames"]
-        #sprite方向映射，如idle: { row: 0, cols: [0, 1, 2] }，表示idle方向的sprite在第0行，第0、1、2列
-        mapping=sprite_info["mapping"]
-        #获取所有需要的精灵图sprites
-        sprites=get_sprite(path,tile_size,rows,cols,scale)
-        ''' manbo示例，sprites输出为是一个list,其中包含十二个surface对象，即为十二张贴图
-            [<Surface(32x32x32 SW)>, <Surface(32x32x32 SW)>, <Surface(32x32x32 SW)>, 
-            <Surface(32x32x32 SW)>, <Surface(32x32x32 SW)>, <Surface(32x32x32 SW)>, 
-            <Surface(32x32x32 SW)>, <Surface(32x32x32 SW)>, <Surface(32x32x32 SW)>, 
-            <Surface(32x32x32 SW)>, <Surface(32x32x32 SW)>, <Surface(32x32x32 SW)>]
-        '''
-        return sprites
-    #根据mapping，组装动画库，达到下面注释效果  manbo示例
-
-    def _build_animations(self,sprites,mapping):
-        '''animations = {
-                    "idle": [0, 0, 0],
-                    "down": [0, 1, 2],
-                    "left":  [3, 4, 5],
-                    "right": [6, 7, 8],
-                    "up":  [9, 10, 11]
-                    }
-                    数字代表sprites列表的索引号
-                    
-            mapping:
-                idle: { rows: 0, cols: [0, 0, 0] }
-                down: { rows: 0, cols: [0, 1, 2] }
-                left: { rows: 1, cols: [0, 1, 2] }
-                right: { rows: 2, cols: [0, 1, 2] }
-                up: { rows: 3, cols: [0, 1, 2] }
-        }'''
-        animations={}
-        #开始创建一个字典
-        #state输出为dict_keys(['idle','down', 'left', 'right', 'up'])
-        #item函数返回元组(key,value)
-        for state , spec in mapping.items():
-            '''    "down":  [0,1,2] '''
-            rows_idx=spec["rows"]
-            cols_idx =spec["cols"]
-            #创建一个列表，用于存储当前状态动画帧
-            lst=[]
-            for col_idx in cols_idx:
-                lst.append(sprites[rows_idx][col_idx])
-            animations[state]=lst
-        return animations
-
             
     def _get_feetgrid_position(self):
         # 根据玩家锚点，获取当前格子坐标，向下取整
@@ -175,11 +133,25 @@ class Player(pygame.sprite.Sprite):
             self.die()
         self._update_player_bomb_cooldown()
         self._update_player_hitbox()
+        self._update_frameIndex()
+        self._update_image()
 
     def _update_frameIndex(self):
-        
-        self.frameIndex+=1
+        if self.moved:
+            self.player_frame_counter += 1
+            if self.player_frame_counter >= self.ANIMATION_DELAY:
+                self.player_frame_counter = 0
+                self.frameIndex+=1
+                if self.frameIndex >= self.frameMax:
+                    self.frameIndex = 0
 
+    def _update_image(self):
+        if self.moved:
+            self.image = self.images[self.direction][self.frameIndex]
+        else:
+            self.frameIndex=1
+            self.image = self.images[self.direction][1]
+            
     def ifInExplosion(self, explosion_rects):
         if not explosion_rects:
             return False
@@ -240,27 +212,31 @@ class Player(pygame.sprite.Sprite):
         if key[self.controls["left"]]:
             dx=-self.speed
             dy=0
-            moved=True
+            self.moved=True
+            self.direction="left"
         elif key[self.controls["right"]]:
             dx=self.speed
             dy=0
-            moved=True
+            self.moved=True
+            self.direction="right"
         elif key[self.controls["up"]]:
             dx=0
             dy=-self.speed
-            moved=True
+            self.moved=True
+            self.direction="up"
         elif key[self.controls["down"]]:
             dx=0
             dy=self.speed
-            moved=True
+            self.moved=True
+            self.direction="down"
         else:
             dx=0
             dy=0
-            moved=False
-        return dx,dy,moved
+            self.moved=False
+        return dx,dy
 
 
-    def move(self,dx,dy,moved,collision_rects):
+    def move(self,dx,dy,collision_rects):
         # 记录移动前坐标
         old_x, old_y = self.rect.x, self.rect.y
         old_feet_x, old_feet_y = self.feet_x, self.feet_y
@@ -272,7 +248,7 @@ class Player(pygame.sprite.Sprite):
         self.feet_y+=dy
         # 同步 feet_rect 位置
         self.feet_rect.center = (self.feet_x, self.feet_y)
-        if moved:
+        if self.moved:
             for rect in collision_rects:
                 #老的障碍判断逻辑，弃用
                 #if self.feet_rect.colliderect(rect):
@@ -312,8 +288,9 @@ class Player(pygame.sprite.Sprite):
             shadow_rect.center = (self.feet_x, self.feet_y)  # 设置中心点在锚点
             window.blit(self.image_shadow, shadow_rect.topleft)  # 使用左上角坐标绘制
         # 渲染人物，使人物踩在影子上
-        if self.images and self.direction in self.images and self.images[self.direction]:
-            window.blit(self.images[self.direction], (self.rect.x, self.rect.y))
+        if self.images:
+            y_fix=OFFSET_Y-self.height
+            window.blit(self.image, (self.rect.x, self.rect.y + y_fix))
         else:
             # 没有贴图，绘制一个矩形代替角色
             pygame.draw.rect(window, self.color, (self.rect.x, self.rect.y, 50, 50))
@@ -322,7 +299,7 @@ class Player(pygame.sprite.Sprite):
     def draw_debug_rect(self, window,DEBUG_MODE):
         if DEBUG_MODE:
             #人物贴图框
-#            pygame.draw.rect(window, (255, 0, 0), (self.rect.x, self.rect.y, 54, 61), 1)
+#           pygame.draw.rect(window, (255, 0, 0), (self.rect.x, self.rect.y, self.width, self.height), 1)
             # 角色hitbox框
             pygame.draw.rect(window, (0, 255, 0), self.hit_box, 1)
             # 角色hitbox锚点
@@ -330,7 +307,3 @@ class Player(pygame.sprite.Sprite):
             # 阴影框
             #pygame.draw.rect(window, (0, 255, 0), self.feet_rect, 1)
     
-
-    def load_sprite(self, width, height):
-        # 此方法已废弃，无需使用
-        pass

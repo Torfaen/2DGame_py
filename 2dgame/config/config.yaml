@@ -26,12 +26,16 @@ assets:
     player_3: "player/player3_sprite"
     player_4: "player/player4_sprite"
     player_5: "player/player5_sprite"
+    manbo: "player/manbo_sprite"
+    hajimi: "player/hajimi_sprite"
+
   sprites_name:
     player_1: "player1_sprite"
     player_2: "player2_sprite"
     player_3: "player3_sprite"
     player_4: "player4_sprite"
-
+    manbo: "manbo_sprite"
+    hajimi: "hajimi_sprite"
 
     # 可继续扩展
 
@@ -52,7 +56,7 @@ players:
         right: "K_RIGHT"
         shift: "K_RSHIFT"
     #速度
-    speed: 5
+    speed: 3
     speed_max: 10
     #泡泡数量
     bomb_count: 2
@@ -60,6 +64,7 @@ players:
     #泡泡强度
     bomb_power: 7
     bomb_power_max: 8
+
 
   - id: 1
     spawn: { x: 200, y: 100 }
@@ -71,7 +76,7 @@ players:
         right: "K_d"
         shift: "K_LSHIFT"
     #速度
-    speed: 5
+    speed: 3
     speed_max: 10
     #泡泡数量
     bomb_count: 1

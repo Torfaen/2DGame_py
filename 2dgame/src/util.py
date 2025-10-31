@@ -12,7 +12,7 @@ def load_sprites():
         frame_path = os.path.join("..", "assets", "sprites", "player",f"manbo_sprite_{i}.png")
         frame = pygame.image.load(frame_path)
         frames.append(frame)
-
+#弃用，不规则贴图组无法使用
 def get_sprite(path,tile_size,rows,cols,scale):
     #为了方便，直接返回二维数组
     sheet = pygame.image.load(os.path.join(path))
@@ -32,6 +32,13 @@ def get_sprite(path,tile_size,rows,cols,scale):
         sprites.append(row)
     return sprites
 
+
+
+def output_sprites(sprites,sprite_name,path):
+    # i代表state，j代表该状态帧数
+    for i in range(len(sprites)):
+        for j in range(len(sprites[i])):
+            pygame.image.save(sprites[i][j], os.path.join(path,f"{sprite_name}_{i}_{j}.png"))
 
 def load_sprite_path(sprite_name):
     path="assets/sprites/player/idle"
@@ -59,13 +66,15 @@ def main():
     #sprite方向映射，如idle: { row: 0, cols: [0, 1, 2] }，表示idle方向的sprite在第0行，第0、1、2列
     mapping=sprite_info["mapping"]
     #获取所有需要的精灵图sprites
-    #sprites=get_sprite(path,tile_size,rows,cols,scale)
-
+    sprites=get_sprite(path,tile_size,rows,cols,scale)
+    #输出动画集
+    output_path=os.path.join("..", "assets", "sprites", "player","manbo_sprite")
+    output_sprites(sprites,sprite_name,output_path)
     print(mapping.keys())
         
 
 if __name__ == "__main__":
-    pass
+    main()
 
 
 #---------------------测试区--------------------------------------------------------------------

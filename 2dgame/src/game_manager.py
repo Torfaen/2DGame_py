@@ -89,7 +89,7 @@ class GameManager:
             # 日后修改为传参
             x=player_1_config['spawn']['x'],
             y=player_1_config['spawn']['y'],
-            sprite_name=self.config['assets']['sprites_name']['player_4'],
+            sprite_name=self.config['assets']['sprites_name']['manbo'],
 
         )
         self.player2 = Player(
@@ -106,7 +106,7 @@ class GameManager:
             # 日后修改为传参
             x=player_2_config['spawn']['x'],
             y=player_2_config['spawn']['y'],
-            sprite_name=self.config['assets']['sprites_name']['player_1'],
+            sprite_name=self.config['assets']['sprites_name']['hajimi'],
         )
         
 
@@ -207,11 +207,11 @@ class GameManager:
         pygame.display.update()
 
     def _update_player(self):
-        '''更新玩家状态'''
+        '''更新玩家动作'''
         for player_obj in self.players_group:
             #玩家动作
-            dx,dy,moved=player_obj.handle_input()
-            player_obj.move(dx,dy,moved,self.map_obj.collision_rects)
+            dx,dy=player_obj.handle_input()
+            player_obj.move(dx,dy,self.map_obj.collision_rects)
             player_obj.place_bomb(self.bombs_group,self.map_obj)
             #玩家状态
             player_obj.update()
@@ -357,15 +357,27 @@ class GameManager:
             # 检查玩家是否死亡
             if self.alive_count <= 1:
                 self.state = "ended"
-                self.winner_id = self.players_group.sprites()[0].id
+                if self.alive_count == 0:
+                    self.winner_id = None
+                else:
+                    self.winner_id = self.players_group.sprites()[0].id
                 return
 
     def _show_winner(self):
-        """显示胜利者"""
-        font = pygame.font.Font(None, 48)
-        winner_text = f"Player {self.winner_id} wins! Press R to restart"
-        text_surface = font.render(winner_text, True, (255, 255, 255))
-        text_rect = text_surface.get_rect(center=(self.window.get_width()/2, self.window.get_height()/2))
+        #
+        if self.winner_id is not None:
+            """显示胜利者"""
+            font = pygame.font.Font(None, 48)
+            winner_text = f"Player {self.winner_id} wins! Press R to restart"
+            text_surface = font.render(winner_text, True, (255, 255, 255))
+            text_rect = text_surface.get_rect(center=(self.window.get_width()/2, self.window.get_height()/2))
+        else:
+            """显示平局"""
+            font = pygame.font.Font(None, 48)
+            winner_text = "no winner! Press R to restart"
+            text_surface = font.render(winner_text, True, (255, 255, 255))
+            text_rect = text_surface.get_rect(center=(self.window.get_width()/2, self.window.get_height()/2))
+
         self.window.blit(text_surface, text_rect)
 
     def _restart_game(self):
