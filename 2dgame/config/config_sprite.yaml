@@ -1,0 +1,28 @@
+sprites:
+  manbo:
+    path: "../assets/sprites/player/曼波与哈基米.png"
+    tile_size: 32
+    rows: 4
+    cols: 3
+    scale: 1
+    frames: 3
+    mapping:
+      idle: { rows: 0, cols: [0, 0, 0] }
+      down:  { row: 0, cols: [0, 1, 2] }
+      left:  { rows: 1, cols: [0, 1, 2] }
+      right: { rows: 2, cols: [0, 1, 2] }
+      up:  { rows: 3, cols: [0, 1, 2] }
+
+  hajimi:
+    path: "../assets/sprites/player/哈基米.png"
+    tile_size: 32
+    rows: 4
+    cols: 3
+    scale: 1
+    frames: 3
+    mapping:      
+      idle: { rows: 0, cols: [3, 3, 3] }
+      down:  { rows: 0, cols: [3, 4, 5] }
+      left:  { rows: 1, cols: [3, 4, 5] }
+      right: { rows: 2, cols: [3, 4, 5] }
+      up:  { rows: 3, cols: [3, 4, 5] }
