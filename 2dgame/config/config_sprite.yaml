@@ -15,7 +15,6 @@ sprites:
     padding_x: 0
     padding_y: 0
     mapping:
-      idle: { rows: 0, cols: [1, 1, 1] }
       down:  { row: 0, cols: [0, 1, 2] }
       left:  { rows: 1, cols: [0, 1, 2] }
       right: { rows: 2, cols: [0, 1, 2] }
@@ -30,8 +29,7 @@ sprites:
     cols: 3
     scale: 1
     frames: 3
-    mapping:      
-      idle: { rows: 0, cols: [4, 4, 4] }
+    mapping:
       down:  { rows: 0, cols: [3, 4, 5] }
       left:  { rows: 1, cols: [3, 4, 5] }
       right: { rows: 2, cols: [3, 4, 5] }
