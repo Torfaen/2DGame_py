@@ -21,6 +21,7 @@ class GameManager:
         self.bombs_group = None
         self.players_group = None
         self.explosions_group = None
+        self.items_group = None
         self.clock = None
         self.window = None
         self.running = True
@@ -131,6 +132,7 @@ class GameManager:
         self.bombs_group = pygame.sprite.Group()
         self.explosions_group = pygame.sprite.Group()
         self.alive_count = len(self.players_group)
+        self.items_group = pygame.sprite.Group()
 
     def run(self):
         while self.running:
@@ -309,6 +311,22 @@ class GameManager:
                     destroyed_blocks.append((check_grid_x, check_grid_y))
                     break
         return destroyed_blocks 
+        #检查玩家是否捡起道具
+
+    def _delete_item(self):
+        for item in self.items_group:
+            for player in self.players_group:
+                if item.rect.colliderect(player.hit_box):
+                    self.items_group.remove(item)
+                    return True
+        return False
+
+    def _ifGetItem(self, player,item):
+        if not item:
+            return False
+        if player.hit_box.colliderect(item.rect):
+            return True
+        return False
 
     def _ifInExplosion(self,player, explosion_rects):
         if not explosion_rects:
@@ -338,6 +356,7 @@ class GameManager:
             if self._ifInExplosion(player_obj,explosions_rects):
                 player_obj.hit_by_bomb(self.CURRENT_GAME_MODE)
                 self.alive_count = len(self.players_group)
+    #处理道具效果，根据道具名字做判断，道具效果生效
 
 
     def update(self):

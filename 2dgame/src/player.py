@@ -151,16 +151,6 @@ class Player(pygame.sprite.Sprite):
         else:
             self.frameIndex=1
             self.image = self.images[self.direction][1]
-            
-    def ifInExplosion(self, explosion_rects):
-        if not explosion_rects:
-            return False
-        else:
-            for rect in explosion_rects:
-                rect_pixel=pygame.Rect(rect.x*TILE_SIZE,rect.y*TILE_SIZE,TILE_SIZE,TILE_SIZE)
-                if self.hit_box.colliderect(rect_pixel):
-                    return True
-            return False
 
     def die(self):
         self.kill()
