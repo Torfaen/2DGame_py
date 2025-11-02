@@ -97,7 +97,7 @@ class Explosion(pygame.sprite.Sprite):
                     break  
                 # 障碍物检查
                 if map_obj.barrier_map[check_grid_y][check_grid_x] != "empty":
-                    self.grids_info.append({"pos":(check_grid_x, check_grid_y), "direction":direction, "is_end":False})
+
                     break
                 #爆炸区域信息添加
                 if i == self.power:
