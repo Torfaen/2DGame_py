@@ -95,9 +95,14 @@ class Explosion(pygame.sprite.Sprite):
                     check_grid_y < 0 or check_grid_y >= len(map_obj.barrier_map)):
                     # 超出边界，跳出当前方向循环
                     break  
+                # 检查碰撞地图值：如果是2（不可摧毁），停止传播
+                if (map_obj.collision_map and 
+                    map_obj.collision_map[check_grid_y][check_grid_x] == 2):
+                    # 遇到不可摧毁的障碍物，停止爆炸传播
+                    break
                 # 障碍物检查
                 if map_obj.barrier_map[check_grid_y][check_grid_x] != "empty":
-
+                    # 遇到可摧毁的障碍物，停止爆炸传播
                     break
                 #爆炸区域信息添加
                 if i == self.power:

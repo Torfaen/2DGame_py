@@ -131,7 +131,7 @@ class Map:
         self.collision_map = collision_data
         for y, row in enumerate(collision_data):
             for x, value in enumerate(row):
-                if value == 1:  # 有碰撞
+                if value == 1 or value == 2:  # 有碰撞（1=可摧毁，2=不可摧毁）
                     rect = pygame.Rect(x * self.tile_size, y * self.tile_size, self.tile_size, self.tile_size)
                     self.collision_rects.append(rect)
 
@@ -157,6 +157,9 @@ class Map:
 
     #障碍物破坏部分函数
     def remove_barrier(self, grid_x, grid_y):
+        # 如果是不含摧毁的障碍物（值为2），不允许移除
+        if self.collision_map and self.collision_map[grid_y][grid_x] == 2:
+            return
         #二维数组索引，先行后列y 表示行号（垂直方向）x 表示列号（水平方向）
         old_obj_name=self.barrier_map[grid_y][grid_x]
         self.barrier_map[grid_y][grid_x] = "empty"  
@@ -179,6 +182,9 @@ class Map:
         self.collision_rects.append(target_rect)
 
     def remove_collision(self, grid_x, grid_y):
+        # 如果是不含摧毁的障碍物（值为2），不允许移除
+        if self.collision_map[grid_y][grid_x] == 2:
+            return
         self.collision_map[grid_y][grid_x] = 0
         target_rect = pygame.Rect(grid_x * self.tile_size, grid_y * self.tile_size,
                                   self.tile_size, self.tile_size)

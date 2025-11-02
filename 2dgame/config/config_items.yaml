@@ -22,6 +22,8 @@ items:
     sprite_path: "../assets/sprites/items/speed_max.png"
     width: 32
     height: 48
+    anchor_x: 16
+    anchor_y: 12
     rows: 1
     cols: 4
     description: "增加最大速度"
@@ -34,6 +36,8 @@ items:
     sprite_path: "../assets/sprites/items/bomb_count_up.png"
     width: 32
     height: 48
+    anchor_x: 16
+    anchor_y: 12
     rows: 1
     cols: 4
     description: "增加炸弹数量"
@@ -70,6 +74,8 @@ items:
     sprite_path: "../assets/sprites/items/bomb_power_up.png"
     width: 32
     height: 48
+    anchor_x: 16
+    anchor_y: 12
     rows: 1
     cols: 4
     description: "增加炸弹威力"

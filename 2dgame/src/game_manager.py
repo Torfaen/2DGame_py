@@ -10,6 +10,9 @@ from config_loader import load_config, dict_controls
 from explosion import Explosion
 from item import Item
 config=load_config("config.yaml")
+config_character=load_config("config_character.yaml")
+config_player=load_config("config_player.yaml")
+
 TILE_SIZE=config["windows"]["tile_size"]
 
 #“输入→更新→碰撞/爆炸→伤害→渲染”的顺序执行
@@ -73,43 +76,46 @@ class GameManager:
     def _load_players(self):
                 
         # 创建玩家对象
-        player_1_config = self.config['players'][0]
-        player_2_config = self.config['players'][1]
+        player_1_config = config_player['player1']
+        player_2_config = config_player['player2']
         player_controls = dict_controls(player_1_config['controls'])
         player2_controls = dict_controls(player_2_config['controls'])
+
+        character_1_config = config_character['characters']['manbo']
+        character_2_config = config_character['characters']['hajimi']
         self.player = Player(
             id=player_1_config['id'],
             controls=player_controls,
-            speed=player_1_config['speed'],
-            speed_max=player_1_config['speed_max'],
-            bombs_count=player_1_config['bomb_count'],
-            bombs_max=player_1_config['bomb_max'],
-            bomb_power=player_1_config['bomb_power'],
-            bomb_power_max=player_1_config['bomb_power_max'],
+            speed=character_1_config['speed'],
+            speed_max=character_1_config['speed_max'],
+            bombs_count=character_1_config['bomb_count'],
+            bombs_max=character_1_config['bomb_max'],
+            bomb_power=character_1_config['bomb_power'],
+            bomb_power_max=character_1_config['bomb_power_max'],
             #读取贴图错误时使用红方块代替
             color=(255, 0, 0),
             game_mode=self.CURRENT_GAME_MODE,
             # 日后修改为传参
             x=player_1_config['spawn']['x'],
             y=player_1_config['spawn']['y'],
-            sprite_name=self.config['assets']['sprites_name']['manbo'],
+            sprite_name=character_1_config['sprite'],
 
         )
         self.player2 = Player(
             id=player_2_config['id'],
             controls=player2_controls,
-            speed=player_2_config['speed'],
-            speed_max=player_2_config['speed_max'],
-            bombs_count=player_2_config['bomb_count'],
-            bombs_max=player_2_config['bomb_max'],
-            bomb_power=player_2_config['bomb_power'],
-            bomb_power_max=player_2_config['bomb_power_max'],
+            speed=character_2_config['speed'],
+            speed_max=character_2_config['speed_max'],
+            bombs_count=character_2_config['bomb_count'],
+            bombs_max=character_2_config['bomb_max'],
+            bomb_power=character_2_config['bomb_power'],
+            bomb_power_max=character_2_config['bomb_power_max'],
             color=(255, 0, 0),
             game_mode=self.CURRENT_GAME_MODE,
             # 日后修改为传参
             x=player_2_config['spawn']['x'],
             y=player_2_config['spawn']['y'],
-            sprite_name=self.config['assets']['sprites_name']['hajimi'],
+            sprite_name=character_2_config['sprite'],
         )
         
 
@@ -335,9 +341,14 @@ class GameManager:
                     check_grid_y < 0 or check_grid_y >= len(self.map_obj.barrier_map)):
                     # 超出边界，跳出当前方向循环
                     break  
+                # 检查碰撞地图值：如果是2（不可摧毁），停止传播但不摧毁
+                if (self.map_obj.collision_map and 
+                    self.map_obj.collision_map[check_grid_y][check_grid_x] == 2):
+                    # 遇到不可摧毁的障碍物，停止爆炸传播但不记录摧毁
+                    break
                 # 障碍物检查
                 if self.map_obj.barrier_map[check_grid_y][check_grid_x] != "empty":
-                    # 遇到障碍物，记录摧毁的方块
+                    # 遇到可摧毁的障碍物，记录摧毁的方块
                     destroyed_blocks.append((check_grid_x, check_grid_y))
                     break
         return destroyed_blocks 
@@ -349,7 +360,7 @@ class GameManager:
     def _ifGetItem(self, player,item):
         if not item:
             return False
-        if player.hit_box.colliderect(item.rect):
+        if player.hit_box.colliderect(item.hit_box):
             return True
         return False
     #处理玩家碰到道具后，获得的buff

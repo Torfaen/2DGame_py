@@ -28,7 +28,6 @@ class Item(pygame.sprite.Sprite):
     
     def __init__(self, x, y,anchor_x,anchor_y,width, height,name,effect_type,effect_value,path):
         super().__init__()
-        self.rect = pygame.Rect(x, y, width , height)
         self.hit_box = pygame.Rect(x, y, TILE_SIZE, TILE_SIZE)
         self.width = width
         self.height = height
@@ -48,8 +47,9 @@ class Item(pygame.sprite.Sprite):
         # 道具图片路径
         self.path = path
         # 道具生成xy坐标
+        self.rect = pygame.Rect(x, y-anchor_y, width, height)
         self.rect.x = x
-        self.rect.y = y
+        self.rect.y = y-anchor_y
         self.anchor_x = anchor_x
         self.anchor_y = anchor_y
 
@@ -88,13 +88,12 @@ class Item(pygame.sprite.Sprite):
             self.kill()
             
     def draw(self, window):
-        y_offset=self.rect.y-self.anchor_y
-        window.blit(self.image, (self.rect.x, y_offset))
+        window.blit(self.image, (self.rect.x, self.rect.y))
 
     def draw_debug_rect(self, window,DEBUG_MODE):
         if DEBUG_MODE:
-            #道具贴图框
-            pygame.draw.rect(window, (0, 255, 0), self.rect, 1)
+            #道具hitbox框
+            pygame.draw.rect(window, (0, 255, 0), self.hit_box, 1)
 
     def update(self):
         self._update_sprite()
