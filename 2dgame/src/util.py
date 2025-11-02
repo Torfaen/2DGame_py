@@ -3,7 +3,7 @@ import os
 
 from config_loader import load_config
 config_sprite=load_config("config_sprite.yaml")
-
+config_items=load_config("config_items.yaml")
 def load_sprites():
     # 加载所有帧
     frames = []
@@ -12,33 +12,37 @@ def load_sprites():
         frame_path = os.path.join("..", "assets", "sprites", "player",f"manbo_sprite_{i}.png")
         frame = pygame.image.load(frame_path)
         frames.append(frame)
+
 #弃用，不规则贴图组无法使用
-def get_sprite(path,tile_size,rows,cols,scale):
+def get_sprite(path,width,height,rows,cols,scale):
     #为了方便，直接返回二维数组
-    sheet = pygame.image.load(os.path.join(path))
-    sprites=[]
-    for r in range(rows):
-        row=[]
-        for c in range(cols):
-            surface = pygame.Surface((tile_size, tile_size), pygame.SRCALPHA, 32)
-            rect = pygame.Rect(c*tile_size, r*tile_size, tile_size, tile_size)
-            surface.blit(sheet, (0, 0), rect)
-            
-            if scale != 1:
-                width=int(surface.get_width() * scale)
-                height=int(surface.get_height() * scale)
-                surface=pygame.transform.scale(surface, (width, height))
-            row.append(surface)
-        sprites.append(row)
-    return sprites
+    try:
+        sheet = pygame.image.load(os.path.join(path))
+        sprites=[]
+        
+        for r in range(rows):
+            row=[]
+            for c in range(cols):
+                surface = pygame.Surface((width, height), pygame.SRCALPHA, 32)
+                rect = pygame.Rect(c*width, r*height, width, height)
+                surface.blit(sheet, (0, 0), rect)
 
-
-
-def output_sprites(sprites,sprite_name,path):
-    # i代表state，j代表该状态帧数
+                if scale != 1:
+                    width=int(surface.get_width() * scale)
+                    height=int(surface.get_height() * scale)
+                    surface=pygame.transform.scale(surface, (width, height))
+                row.append(surface)
+            sprites.append(row)
+        return sprites
+    except Exception as e:
+        print(f"加载贴图失败: {e}")
+        surf=pygame.Surface((width, height), pygame.SRCALPHA, 32)
+        surf.fill((0,255,0))
+        return surf
+def output_sprites(sprites,name,path):
     for i in range(len(sprites)):
         for j in range(len(sprites[i])):
-            pygame.image.save(sprites[i][j], os.path.join(path,f"{sprite_name}_{i}_{j}.png"))
+            pygame.image.save(sprites[i][j], os.path.join(path,f"{name}_{i}_{j}.png"))
 
 def load_sprite_path(sprite_name):
     path="assets/sprites/player/idle"
@@ -48,30 +52,21 @@ def load_map():
     pass
 #---------------------测试区--------------------------------------------------------------------
 def main():
-    sprite_name="manbo"
-    sprite_info=config_sprite["sprites"][f"{sprite_name}"]
-    #sprite_name: manbo_sprite
-    #路径
-    path=sprite_info["path"]
-    #sprite尺寸大小，一般为32x32
-    tile_size=sprite_info["tile_size"]
-    #sprite行数
-    rows=sprite_info["rows"]
-    #sprite列数
-    cols=sprite_info["cols"]
-    #sprite缩放比例
-    scale=sprite_info["scale"]
-    #sprite帧数
-    frames=sprite_info["frames"]
-    #sprite方向映射，如idle: { row: 0, cols: [0, 1, 2] }，表示idle方向的sprite在第0行，第0、1、2列
-    mapping=sprite_info["mapping"]
-    #获取所有需要的精灵图sprites
-    sprites=get_sprite(path,tile_size,rows,cols,scale)
-    #输出动画集
-    output_path=os.path.join("..", "assets", "sprites", "player","manbo_sprite")
-    output_sprites(sprites,sprite_name,output_path)
-    print(mapping.keys())
-        
+    '''    items=config_items["items"]["speed_up"]
+        path=items["sprite_path"]
+        width=items["width"]
+        height=items["height"]
+        rows=items["rows"]
+        cols=items["cols"]
+        scale=1
+        name=items["name"]
+        output_path=os.path.join("..", "assets", "sprites", "raw")
+        sprites=get_sprite(path,width,height,rows,cols,scale)
+        output_sprites(sprites,name,output_path)'''
+    items=config_items["items"]
+    items_keys = list(items.keys())  # 获取所有种类，如 ['speed_up', 'speed_max', ...]
+    print(items_keys)
+
 
 if __name__ == "__main__":
     main()

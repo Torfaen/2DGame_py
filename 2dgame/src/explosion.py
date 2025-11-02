@@ -53,35 +53,6 @@ class Explosion(pygame.sprite.Sprite):
             self.kill()
 
 
-    def destroy_blocks_in_explosion(self):
-        # 转换为格子坐标
-        bomb_grid_x = self.rect.x // TILE_SIZE
-        bomb_grid_y = self.rect.y // TILE_SIZE
-        
-        #上下左右
-        directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]  
-        #四向遍历
-        for dx, dy in directions:
-            for i in range(1, self.power + 1):
-                check_grid_x = bomb_grid_x + dx * i
-                check_grid_y = bomb_grid_y + dy * i                
-                # 边界检查，地图左上角为(0,0),右下角为(len(map_obj.barrier_map[0])-1,len(map_obj.barrier_map)-1)
-                # 若x<0则超左边界，x大于len(map_obj.barrier_map[0])-1则超右边界，
-                # y<0则超上边界，y大于len(map_obj.barrier_map)-1则超下边界
-                if (check_grid_x < 0 or check_grid_x >= len(self.map_obj.barrier_map[0]) or 
-                    check_grid_y < 0 or check_grid_y >= len(self.map_obj.barrier_map)):
-                    # 超出边界，跳出当前方向循环
-                    break  
-                # 障碍物检查
-                if self.map_obj.barrier_map[check_grid_y][check_grid_x] != "empty":
-                    # 遇到障碍物，记录摧毁的方块
-                    #self.destroyed_blocks.append((check_grid_x, check_grid_y))
-                    # 分离计算与摧毁，不然会造成贯穿摧毁
-                    self.map_obj.remove_barrier(check_grid_x, check_grid_y)
-                    self.map_obj.remove_collision(check_grid_x, check_grid_y)
-                    break
-    
-
     def _update_image(self):
         for grid_info in self.grids_info:
             grid_x=grid_info["pos"][0]
@@ -126,6 +97,7 @@ class Explosion(pygame.sprite.Sprite):
                     break  
                 # 障碍物检查
                 if map_obj.barrier_map[check_grid_y][check_grid_x] != "empty":
+                    self.grids_info.append({"pos":(check_grid_x, check_grid_y), "direction":direction, "is_end":False})
                     break
                 #爆炸区域信息添加
                 if i == self.power:

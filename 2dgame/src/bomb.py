@@ -28,6 +28,7 @@ class Bomb(pygame.sprite.Sprite):
         self.power = power
         self.timer = 0
         self.exploded = False
+        self.alive = True
         #破坏的方块列表
         self.destroyed_blocks = []
         #爆炸波及的区域rect,一个泡泡对于一个爆炸区域，主函数创造一个group存储所有爆炸区域
@@ -46,14 +47,6 @@ class Bomb(pygame.sprite.Sprite):
         # 加载各个状态泡泡的图像
         self.image_bomb = self._load_bomb_sprite()
 
-        # 加载各个方向爆炸水柱贴图
-        self.explosion_images = {
-            "center": self._load_explosion_sprite("center"),
-            "up": self._load_explosion_sprite("up"),
-            "down": self._load_explosion_sprite("down"),
-            "left": self._load_explosion_sprite("left"),
-            "right": self._load_explosion_sprite("right"),
-        }
     # 放置时产生阻挡
     def _generate_collision(self,x,y):
         grid_x = x // TILE_SIZE
@@ -65,44 +58,7 @@ class Bomb(pygame.sprite.Sprite):
         grid_x = x // TILE_SIZE
         grid_y = y // TILE_SIZE
         self.map_obj.remove_collision(grid_x,grid_y)
-        
-    def _load_explosion_sprite(self,direction,is_end=False):
-        size=(32,32)
-        # 判断中心
-        if direction == "center":
-            path=os.path.join("..", "assets", "sprites", "bomb", "center.png")
-            image=pygame.image.load(path)
-            image = pygame.transform.scale(image,(32,32))
-            return image
-        # 判断四周爆炸
-        if is_end:
-            path=os.path.join("..", "assets", "sprites", "bomb", "explosion_1.png")
-        else:
-            path=os.path.join("..", "assets", "sprites", "bomb", "explosion_0.png")
-        #加载泡泡贴图
-        try:
-            image = pygame.image.load(path)
-            if direction == "right":
-                pass
-            elif direction == "left":
-                image = pygame.transform.flip(image, True, False)
-            elif direction == "up":
-                image = pygame.transform.rotate(image, 90)
-            elif direction == "down":
-                image = pygame.transform.rotate(image, -90)
-
-            image = pygame.transform.scale(image,(32,32))
-            return image
-            
-
-        except (pygame.error, FileNotFoundError) as e:
-            # 临时方块贴图
-            surface = pygame.Surface(size, pygame.SRCALPHA)
-            #pygame.draw.rect(self.image_bomb, (173, 216, 230), (self.rect.x, self.rect.y, 32, 32))
-            pygame.draw.rect(surface, (173, 216, 230), surface.get_rect())
-            print(f"警告：无法加载泡泡图片 ({e})")
-            return surface
-
+    
     def _load_bomb_sprite(self):
         size=(32,32)
         path=os.path.join("..", "assets", "sprites", "bomb", f"idle_{self.bomb_frame_index}.png")
@@ -128,62 +84,29 @@ class Bomb(pygame.sprite.Sprite):
             self.image_bomb=self._load_bomb_sprite()
             self.bomb_frame_counter = 0
 
+    def _update_alive(self):
+        if not self.alive:
+            self.kill()
+            
     def update(self):
         #处理动画
         self._update_frame_index()
         #处理炸弹状态
         self._update_bomb_status()
-
-
-
-    
-    def get_explosion_area(self):
-        explosion_area = []
-        # 转换为格子坐标
-        bomb_x = self.rect.x // TILE_SIZE
-        bomb_y = self.rect.y // TILE_SIZE
-        
-        #上下左右
-        directions = [(0, -1), (0, 1), (-1, 0), (1, 0)]  
-        #四向遍历
-        for dx, dy in directions:
-            for i in range(1, self.power + 1):
-                check_x = bomb_x + dx * i
-                check_y = bomb_y + dy * i                
-                # 边界检查，地图左上角为(0,0),右下角为(len(map_obj.barrier_map[0])-1,len(map_obj.barrier_map)-1)
-                # 若x<0则超左边界，x大于len(map_obj.barrier_map[0])-1则超右边界，
-                # y<0则超上边界，y大于len(map_obj.barrier_map)-1则超下边界
-                if (check_x < 0 or check_x >= len(self.map_obj.barrier_map[0]) or 
-                    check_y < 0 or check_y >= len(self.map_obj.barrier_map)):
-                    # 超出边界，跳出当前方向循环
-                    break  
-                # 障碍物检查
-                if self.map_obj.barrier_map[check_y][check_x] != "empty":
-                    # 遇到障碍物，停止该方向的爆炸
-                    #self.destroyed_blocks.append((check_x, check_y))
-                    #分离计算与摧毁，不然会造成贯穿摧毁
-                    #map_obj.remove_barrier(check_x, check_y)
-                    #map_obj.remove_collision(check_x, check_y)
-                    #explosion_area.append((check_x, check_y))  # 障碍物位置也算在爆炸范围内
-                    break
-                #爆炸区域像素xy坐标以及rect
-                self.explosion_area.append(pygame.Rect(check_x * TILE_SIZE, check_y * TILE_SIZE, TILE_SIZE, TILE_SIZE))
-                #格子坐标
-                explosion_area.append((check_x, check_y))
-                #创建爆炸区域rect
-                self.explosion_rect.append(pygame.Rect(check_x, check_y, TILE_SIZE, TILE_SIZE))
-        #print("爆炸范围：", explosion_area)
-        return explosion_area
-    
+        #处理炸弹消失
+        self._update_alive()
+ 
     def _update_bomb_status(self):
         self.timer+=1
         if self.timer >= FPS*3.5 and not self.exploded:
             self.exploded = True
 
+    def _update_remove(self):
+            self.alive = False
+            self.remove_collision(self.rect.x, self.rect.y)
 
     def draw(self, window):
-        if not self.exploded:
-            window.blit(self.image_bomb, self.rect.topleft)
+         window.blit(self.image_bomb, self.rect.topleft)
 
 
 

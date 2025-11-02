@@ -111,7 +111,8 @@ class Player(pygame.sprite.Sprite):
 
         except pygame.error as e:
             print(f"无法加载玩家图片: {e}")
-            
+
+
     def _get_feetgrid_position(self):
         # 根据玩家锚点，获取当前格子坐标，向下取整
         # 例子：只要grid_x坐标在1-2内，那么grid_x则取1，以便绘制整个格子
@@ -125,7 +126,8 @@ class Player(pygame.sprite.Sprite):
         grid_x, grid_y = self._get_feetgrid_position()
         x=grid_x * TILE_SIZE
         y=grid_y * TILE_SIZE
-        self.hit_box = pygame.Rect(x,y,TILE_SIZE, TILE_SIZE)
+        self.hit_box = pygame.Rect(x,
+        y,TILE_SIZE, TILE_SIZE)
 
     def update(self):
         """更新玩家内部状态（每帧调用）"""
@@ -174,7 +176,7 @@ class Player(pygame.sprite.Sprite):
     def handle_bomb_group(self, bombs_group,map_obj):
         # 检查当前想激活的泡泡是否合法，移除已经爆炸的泡泡
         self.bombs_active = [b for b in self.bombs_active if not b.exploded]
-        if len(self.bombs_active) >= self.bombs_max:
+        if len(self.bombs_active) >= self.bombs_count:
             return None
         grid_x,grid_y=self._get_feetgrid_position()
         x = grid_x * TILE_SIZE
@@ -297,3 +299,34 @@ class Player(pygame.sprite.Sprite):
             # 阴影框
             #pygame.draw.rect(window, (0, 255, 0), self.feet_rect, 1)
     
+    #修改属性接口，更新速度，炸弹数量，炸弹威力
+    def update_speed(self,effect_value):
+        self.speed = min(self.speed + effect_value, self.speed_max)
+
+    def update_bombs_count(self,effect_value):
+        self.bombs_count = min(self.bombs_count + effect_value, self.bombs_max)
+
+    def update_bomb_power(self,effect_value):
+        self.bomb_power = min(self.bomb_power + effect_value, self.bomb_power_max)
+        
+    # 道具类型控制器，根据道具类型，更新玩家属性
+    def update_item_effect(self,dict_effect):
+        # 增加属性 一点值系列道具
+        if dict_effect["type"] == "speed":
+            self.update_speed(dict_effect["value"]) 
+
+        elif dict_effect["type"] == "bomb_count":
+            self.update_bombs_count(dict_effect["value"])   
+
+        elif dict_effect["type"] == "bomb_power":
+            self.update_bomb_power(dict_effect["value"])
+
+        # 增加属性 最大值系列道具
+        elif dict_effect["type"] == "speed_max":
+            self.update_speed(dict_effect["value"])
+
+        elif dict_effect["type"] == "bomb_count_max":
+            self.update_bombs_count(dict_effect["value"])
+
+        elif dict_effect["type"] == "bomb_power_max":
+            self.update_bomb_power(dict_effect["value"])

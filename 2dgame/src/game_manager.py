@@ -1,12 +1,14 @@
 import os
 import re
 import pygame
+import random
 from player import Player
 from map import Map
 from bomb import Bomb
 import json
 from config_loader import load_config, dict_controls
 from explosion import Explosion
+from item import Item
 config=load_config("config.yaml")
 TILE_SIZE=config["windows"]["tile_size"]
 
@@ -188,26 +190,31 @@ class GameManager:
                 _, bomb_obj, _, _, _ = obj
                 bomb_obj.draw(self.window)  # 传入地图对象用于爆炸范围计算
 
-
+    def _draw_items(self):
+        for item in self.items_group:
+            item.draw(self.window)
     def _render(self):
         # 绘制画面
         self.window.fill((0, 0, 0))  # 清屏（黑色背景）
         self.map_obj.draw_floor(self.window)
         drawables = self._handle_draw_obj()
         self._draw_sorted_obj(drawables)
+        self._draw_items()
 
         # 绘制调试信息（在绘制完所有游戏对象之后，避免在循环内重复绘制）
         if self.DEBUG_MODE:
             self.map_obj.draw_debug_rect_barrier(self.window, self.DEBUG_MODE)
             self.map_obj.draw_debug_barrier_coords(self.window, self.DEBUG_MODE)  # 显示barrier坐标
             self.map_obj.draw_debug_rect_collision(self.window, self.DEBUG_MODE)
+            for item_obj in self.items_group:
+                item_obj.draw_debug_rect(self.window, self.DEBUG_MODE)
             for player_obj in self.players_group:
                 player_obj.draw_debug_rect(self.window, self.DEBUG_MODE)
         # 更新显示
         if self.state =="ended":
             self._show_winner()
         pygame.display.update()
-
+    
     def _update_player(self):
         '''更新玩家动作'''
         for player_obj in self.players_group:
@@ -227,12 +234,24 @@ class GameManager:
                 # 触发爆炸，创建 Explosion 对象
                 bomb.explosion_handled = True
                 explosion = self.trigger_explosion(bomb)
+                bomb._update_remove()
                 self.explosions_group.add(explosion)
-                bomb.kill()
+
+
+    def _update_item(self):
+         for item in list(self.items_group):
+            for player in list(self.players_group):
+                if self._ifGetItem(player, item):          
+                    item_effect = item.get_effect()
+                    player.update_item_effect(item_effect)
+                    item.alive = False
+            item.update()
+
 
     # 爆炸类对象，统一由该函数创建，因为炸弹爆炸必定会产生爆炸区域，而爆炸区域在pvp中必定由炸弹产生
     def trigger_explosion(self,bomb):
         #创建该炸弹的爆炸区域对象
+        bomb.alive = False
         bomb.remove_collision(bomb.rect.x, bomb.rect.y)
         #创建爆炸区域对象
         explosion = Explosion(bomb.rect.x, bomb.rect.y, bomb.power, self.map_obj)
@@ -257,12 +276,24 @@ class GameManager:
                 explosion.explosion_handled = True
                 # 然后再开始摧毁
                 destroyed_blocks = self.get_destroy_blocks(explosion)
-                self.destroy_blocks(destroyed_blocks)
-
-
+                self.handle_hit_blocks( destroyed_blocks)
         # 命中玩家判定，玩家会移动，需要爆炸时每帧判定，不要只在炸弹爆炸时判定
         if  self.explosions_group:
             self._update_hit_explosion()
+
+
+    def handle_hit_blocks(self,destroyed_blocks):
+        for block in destroyed_blocks:
+           self._destroy_block(block)
+           self._create_item(block)
+
+    def _create_item(self,destroyed_block):
+        # 掉落概率（比如30%）
+        drop_rate = 0.3  # 可以放在配置文件中，或者在 __init__ 中初始化
+        if random.random() < drop_rate:
+            x_grid,y_grid= destroyed_block
+            item = Item.create_random(x_grid*TILE_SIZE, y_grid*TILE_SIZE)
+            self.items_group.add(item)
 
     def _handle_chain_explosion(self, explosion):
         # 连锁爆炸，遍历所有炸弹，如果炸弹在爆炸区域内，则触发连锁爆炸
@@ -275,12 +306,11 @@ class GameManager:
                     # 触发连锁爆炸
                     bomb.exploded = True
                     # 连锁爆炸产生的新爆炸区
-        
-    def destroy_blocks(self,destroyed_blocks):
-        for block in destroyed_blocks:
-            x_grid,y_grid= block
-            self.map_obj.remove_collision(x_grid, y_grid)
-            self.map_obj.remove_barrier(x_grid, y_grid)
+       
+    def _destroy_block(self,destroyed_block):
+        x_grid,y_grid= destroyed_block
+        self.map_obj.remove_collision(x_grid, y_grid)
+        self.map_obj.remove_barrier(x_grid, y_grid)
 
             
     def get_destroy_blocks(self,explosion):
@@ -313,28 +343,24 @@ class GameManager:
         return destroyed_blocks 
         #检查玩家是否捡起道具
 
-    def _delete_item(self):
-        for item in self.items_group:
-            for player in self.players_group:
-                if item.rect.colliderect(player.hit_box):
-                    self.items_group.remove(item)
-                    return True
-        return False
+    #处理删除物品
 
+    #返回是否碰到物品
     def _ifGetItem(self, player,item):
         if not item:
             return False
         if player.hit_box.colliderect(item.rect):
             return True
         return False
+    #处理玩家碰到道具后，获得的buff
 
-    def _ifInExplosion(self,player, explosion_rects):
+    def _ifInExplosion(self,obj_rect, explosion_rects):
         if not explosion_rects:
             return False
         else:
             for rect in explosion_rects:
                 rect_pixel=pygame.Rect(rect.x,rect.y,TILE_SIZE,TILE_SIZE)
-                if player.hit_box.colliderect(rect_pixel):
+                if obj_rect.hit_box.colliderect(rect_pixel):
                     return True
             return False
 
@@ -356,6 +382,10 @@ class GameManager:
             if self._ifInExplosion(player_obj,explosions_rects):
                 player_obj.hit_by_bomb(self.CURRENT_GAME_MODE)
                 self.alive_count = len(self.players_group)
+        for item_obj in self.items_group:
+            if self._ifInExplosion(item_obj,explosions_rects):
+                item_obj.alive = False
+                self.items_group.remove(item_obj)
     #处理道具效果，根据道具名字做判断，道具效果生效
 
 
@@ -363,6 +393,8 @@ class GameManager:
         '''“输入→更新→碰撞/爆炸→伤害→渲染”的顺序执行'''
         # 更新玩家移动
         self._update_player()
+        # 更新道具
+        self._update_item()
         # 泡泡列表信息更新
         self._update_bomb()
         # 爆炸区域信息更新 , 爆炸击中玩家 , 摧毁方块
