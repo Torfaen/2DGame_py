@@ -21,10 +21,12 @@ class Item(pygame.sprite.Sprite):
         height=item["height"]
         rows=item["rows"]
         cols=item["cols"]
+        anchor_x=item["anchor_x"]
+        anchor_y=item["anchor_y"]
         # 存储所有序列帧贴图的字典，key为道具名称，value为序列帧贴图列表
         sprites[name]=get_sprite(sprite_path,width,height,rows,cols,scale=1)
     
-    def __init__(self, x, y, width, height,name,effect_type,effect_value,path):
+    def __init__(self, x, y,anchor_x,anchor_y,width, height,name,effect_type,effect_value,path):
         super().__init__()
         self.rect = pygame.Rect(x, y, width , height)
         self.hit_box = pygame.Rect(x, y, TILE_SIZE, TILE_SIZE)
@@ -48,13 +50,16 @@ class Item(pygame.sprite.Sprite):
         # 道具生成xy坐标
         self.rect.x = x
         self.rect.y = y
+        self.anchor_x = anchor_x
+        self.anchor_y = anchor_y
+
         self.alive = True
 
     @classmethod
     def create_random(cls,rect_x,rect_y):
         item_name = random.choice(cls.items_keys)
         item_config = cls.items[item_name]
-        item = cls(x=rect_x, y=rect_y,name=item_config["name"], 
+        item = cls(x=rect_x, y=rect_y,anchor_x=item_config["anchor_x"],anchor_y=item_config["anchor_y"],name=item_config["name"],
                     width=item_config["width"], height=item_config["height"],
                     effect_type=item_config["effect_type"], effect_value=item_config["effect_value"], 
                     path=item_config["sprite_path"])
@@ -83,7 +88,7 @@ class Item(pygame.sprite.Sprite):
             self.kill()
             
     def draw(self, window):
-        y_offset=self.rect.y+(TILE_SIZE-self.height)
+        y_offset=self.rect.y-self.anchor_y
         window.blit(self.image, (self.rect.x, y_offset))
 
     def draw_debug_rect(self, window,DEBUG_MODE):
