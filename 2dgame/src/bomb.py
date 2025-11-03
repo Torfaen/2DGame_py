@@ -2,7 +2,6 @@ from re import S
 import pygame
 import os
 from explosion import Explosion
-from macholib.ptypes import sizeof
 from config_loader import load_config, dict_controls
 
 config=load_config("config.yaml")

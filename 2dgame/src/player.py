@@ -184,7 +184,6 @@ class Player(pygame.sprite.Sprite):
         for bomb in self.bombs_active:
             if bomb.rect.x == x and bomb.rect.y == y:
                 return None
-
         bomb_new=Bomb(x,y,self.bomb_power,map_obj=map_obj)
         self.bombs_active.append(bomb_new)
         #合法的泡泡添加进容器

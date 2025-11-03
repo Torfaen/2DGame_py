@@ -233,10 +233,38 @@ class GameManager:
             #玩家动作
             dx,dy=player_obj.handle_input()
             player_obj.move(dx,dy,self.map_obj.collision_rects)
-            player_obj.place_bomb(self.bombs_group,self.map_obj)
-            self.audio_manager.play("bomb",1)
+            self.place_bomb(player_obj,self.bombs_group)
             #玩家状态
             player_obj.update()
+
+
+    def place_bomb(self,player,bombs_group):
+        """按键长按检测版：按下就尝试放置炸弹"""
+        keys = pygame.key.get_pressed()
+        if keys[player.controls["shift"]] and player.bomb_cooldown <= 0:
+            self.create_bomb(player,bombs_group)
+
+    def create_bomb(self,player,bombs_group):
+        # 检查当前想激活的泡泡是否合法，移除已经爆炸的泡泡
+        player.bombs_active = [b for b in player.bombs_active if not b.exploded]
+        if len(player.bombs_active) >= player.bombs_count:
+            return None
+        grid_x,grid_y=player._get_feetgrid_position()
+        x = grid_x * TILE_SIZE
+        y = grid_y * TILE_SIZE
+        for bomb in player.bombs_active:
+            if bomb.rect.x == x and bomb.rect.y == y:
+                return None
+        
+        bomb_new=Bomb(x,y,player.bomb_power,map_obj=self.map_obj)
+        player.bombs_active.append(bomb_new)
+        #合法的泡泡添加进容器
+        bombs_group.add(bomb_new)
+        #播放放置泡泡音效
+        self.audio_manager.play("bomb_place")
+        #放下泡泡，开始冷却
+        player.bomb_cooldown = player.bomb_cooldown_max
+        return bomb_new
 
     def _update_bomb(self):
         #统一创建explosion对象，避免重复创建
@@ -248,6 +276,7 @@ class GameManager:
                 bomb.explosion_handled = True
                 explosion = self.trigger_explosion(bomb)
                 bomb._update_remove()
+                self.audio_manager.play("explosion")
                 self.explosions_group.add(explosion)
 
 
@@ -268,6 +297,7 @@ class GameManager:
         bomb.remove_collision(bomb.rect.x, bomb.rect.y)
         #创建爆炸区域对象
         explosion = Explosion(bomb.rect.x, bomb.rect.y, bomb.power, self.map_obj)
+
         return explosion
 
 
