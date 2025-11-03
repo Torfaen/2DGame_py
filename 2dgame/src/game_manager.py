@@ -9,6 +9,7 @@ import json
 from config_loader import load_config, dict_controls
 from explosion import Explosion
 from item import Item
+from audio_manager import AudioManager
 config=load_config("config.yaml")
 config_character=load_config("config_character.yaml")
 config_player=load_config("config_player.yaml")
@@ -27,6 +28,9 @@ class GameManager:
         self.players_group = None
         self.explosions_group = None
         self.items_group = None
+
+        self.audio_manager = AudioManager()
+
         self.clock = None
         self.window = None
         self.running = True
@@ -51,7 +55,9 @@ class GameManager:
         self.clock = pygame.time.Clock()
         pygame.display.set_caption(self.config['windows']['title'])
 
-
+    def _load_audio(self):
+        self.audio_manager.load_sounds()
+    
     def _load_maps(self):
         # 地图路径
         base_dir = self.config['assets']['base_dir']
@@ -228,6 +234,7 @@ class GameManager:
             dx,dy=player_obj.handle_input()
             player_obj.move(dx,dy,self.map_obj.collision_rects)
             player_obj.place_bomb(self.bombs_group,self.map_obj)
+            self.audio_manager.play("bomb",1)
             #玩家状态
             player_obj.update()
 
