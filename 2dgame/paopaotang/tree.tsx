@@ -2,6 +2,6 @@
 <tileset version="1.10" tiledversion="1.11.2" name="tree" tilewidth="32" tileheight="46" tilecount="1" columns="0">
  <grid orientation="orthogonal" width="1" height="1"/>
  <tile id="0">
-  <image source="../../game_py/2DGame_py/2dgame/assets/sprites/background/map_base/tree.png" width="32" height="46"/>
+  <image source="../assets/sprites/background/map_base/tree.png" width="32" height="46"/>
  </tile>
 </tileset>
