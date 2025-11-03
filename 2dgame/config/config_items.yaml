@@ -1,0 +1,82 @@
+# 道具配置
+items:
+  speed_up:
+    name: "speed_up"
+    display_name: "加速道具"
+    effect_type: "speed"
+    effect_value: 1
+    sprite_path: "../assets/sprites/items/speed_up.png"
+    width: 32
+    height: 48
+    anchor_x: 16
+    anchor_y: 12
+    rows: 1
+    cols: 4
+    description: "增加移动速度"
+  
+  speed_max:
+    name: "speed_max"
+    display_name: "最大速度道具"
+    effect_type: "speed"
+    effect_value: 100
+    sprite_path: "../assets/sprites/items/speed_max.png"
+    width: 32
+    height: 48
+    anchor_x: 16
+    anchor_y: 12
+    rows: 1
+    cols: 4
+    description: "增加最大速度"
+
+  bomb_count_up:
+    name: "bomb_count_up"
+    display_name: "炸弹数量增加道具"
+    effect_type: "bomb_count"
+    effect_value: 1
+    sprite_path: "../assets/sprites/items/bomb_count_up.png"
+    width: 32
+    height: 48
+    anchor_x: 16
+    anchor_y: 12
+    rows: 1
+    cols: 4
+    description: "增加炸弹数量"
+
+#  bomb_count_max:
+#    name: "bomb_count_max"
+#    display_name: "最大炸弹数量道具"
+#    effect_type: "bomb_count"
+#    effect_value: 100
+#    sprite_path: "../assets/sprites/items/bomb_count_max.png"
+#    width: 32
+#    height: 48
+#    rows: 1
+#    cols: 4
+#    description: "增加最大炸弹数量"
+
+#  bomb_power_max:
+#    name: "bomb_power_max"
+#    display_name: "最大炸弹威力道具"
+#    effect_type: "bomb_power"
+#    effect_value: 100
+#    sprite_path: "../assets/sprites/items/bomb_power_max.png"
+#    width: 32
+#    height: 48
+#    rows: 1
+#    cols: 4
+#    description: "增加最大炸弹威力"
+
+  bomb_power_up:
+    name: "bomb_power_up"
+    display_name: "炸弹威力增加道具"
+    effect_type: "bomb_power"
+    effect_value: 1
+    sprite_path: "../assets/sprites/items/bomb_power_up.png"
+    width: 32
+    height: 48
+    anchor_x: 16
+    anchor_y: 12
+    rows: 1
+    cols: 4
+    description: "增加炸弹威力"
+

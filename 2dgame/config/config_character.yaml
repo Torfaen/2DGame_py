@@ -1,0 +1,26 @@
+characters:
+  manbo:
+    name: "manbo"
+    sprite: "manbo_sprite"
+    #速度
+    speed: 2
+    speed_max: 5
+    #泡泡数量
+    bomb_count: 1
+    bomb_max: 7
+    #泡泡强度
+    bomb_power: 1
+    bomb_power_max: 7
+
+  hajimi:
+    name: "hajimi"
+    sprite: "hajimi_sprite"
+    #速度
+    speed: 2
+    speed_max: 6
+    #泡泡数量
+    bomb_count: 2
+    bomb_max: 6
+    #泡泡强度
+    bomb_power: 1
+    bomb_power_max: 6

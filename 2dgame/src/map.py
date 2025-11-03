@@ -1,8 +1,10 @@
 # 在 map.py 文件中创建 Map 类
 import pygame
 import os
-WINDOW_WIDTH = 800
-WINDOW_HEIGHT = 600
+from config_loader import load_config
+config=load_config("config.yaml")
+
+TILE_SIZE=config["windows"]["tile_size"]
 
 import pygame
 import os
@@ -37,6 +39,8 @@ class Map:
         self.collision_rects = []  # 存储所有障碍物的碰撞框
         self.barrier_rects = []
         self.floor_rects=[]
+        # 爆炸摧毁的方块列表
+        self.destroyed_blocks = []
         # 贴图字典，用于自动加载文件夹内贴图,全部存入 self.tiles
         self.tiles = {}
         tiles_path = os.path.join("..", "assets", "sprites", "background","map_base")
@@ -60,7 +64,11 @@ class Map:
         # 水 (32,32) - 32x32
         self.water = sprite_sheet.get_sprite(32, 32, 32, 32)
     '''
-
+    def get_size(self):
+        x_size_grid=self.barrier_map[0].length
+        y_size_grid=self.barrier_map.length
+        return x_size_grid,y_size_grid
+        
     def draw_debug_rect_floor(self, window, debug_mode):
         if not debug_mode:
             return
@@ -92,10 +100,8 @@ class Map:
                 self._debug_coord_text_rects_cache = {}
                 self._debug_coord_frame_counter = 0
             
-            # 每5帧只更新一次，大幅减少绘制频率
-            self._debug_coord_frame_counter += 1
-            if self._debug_coord_frame_counter % 5 != 0:
-                return
+            # 每5帧只渲染一次（但不清空已渲染的文字）
+            # 不使用return，让已经渲染的文字保留
             
 
             for rect in self.barrier_rects:
@@ -125,7 +131,7 @@ class Map:
         self.collision_map = collision_data
         for y, row in enumerate(collision_data):
             for x, value in enumerate(row):
-                if value == 1:  # 有碰撞
+                if value == 1 or value == 2:  # 有碰撞（1=可摧毁，2=不可摧毁）
                     rect = pygame.Rect(x * self.tile_size, y * self.tile_size, self.tile_size, self.tile_size)
                     self.collision_rects.append(rect)
 
@@ -150,21 +156,38 @@ class Map:
                 self.barrier_rects.append(rect)
 
     #障碍物破坏部分函数
-    def remove_barrier(self, x, y):
+    def remove_barrier(self, grid_x, grid_y):
+        # 如果是不含摧毁的障碍物（值为2），不允许移除
+        if self.collision_map and self.collision_map[grid_y][grid_x] == 2:
+            return
         #二维数组索引，先行后列y 表示行号（垂直方向）x 表示列号（水平方向）
-        old_obj_name=self.barrier_map[y][x]
-        self.barrier_map[y][x] = "empty"
+        old_obj_name=self.barrier_map[grid_y][grid_x]
+        self.barrier_map[grid_y][grid_x] = "empty"  
         # 移除对应的碰撞框
-        target_rect = pygame.Rect(x * self.tile_size, y * self.tile_size, 
+        target_rect = pygame.Rect(grid_x * self.tile_size, grid_y * self.tile_size, 
                                 self.tile_size, self.tile_size)
         self.barrier_rects = [rect for rect in self.barrier_rects 
                             if not rect.collidepoint(target_rect.center)]
         print(f"remove barrier:{old_obj_name}")
-                            
-    def remove_collision(self, x, y):
-        self.collision_map[y][x] = 0
-        target_rect = pygame.Rect(x * self.tile_size, y * self.tile_size, 
-                                self.tile_size, self.tile_size)
+
+    def generate_collision(self, grid_x, grid_y):
+        # 先检查是否已存在相同位置的碰撞矩形，有就返回
+        if any(rect.x == grid_x * self.tile_size and rect.y == grid_y * self.tile_size
+               for rect in self.collision_rects):
+            return
+        # 确认不存在后再添加
+        self.collision_map[grid_y][grid_x] = 1
+        target_rect = pygame.Rect(grid_x * self.tile_size, grid_y * self.tile_size,
+                                  self.tile_size, self.tile_size)
+        self.collision_rects.append(target_rect)
+
+    def remove_collision(self, grid_x, grid_y):
+        # 如果是不含摧毁的障碍物（值为2），不允许移除
+        if self.collision_map[grid_y][grid_x] == 2:
+            return
+        self.collision_map[grid_y][grid_x] = 0
+        target_rect = pygame.Rect(grid_x * self.tile_size, grid_y * self.tile_size,
+                                  self.tile_size, self.tile_size)
         self.collision_rects=[rect for rect in self.collision_rects 
                             if not rect.collidepoint(target_rect.center)]
                             

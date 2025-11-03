@@ -4,10 +4,23 @@ import pygame
 from player import Player
 from map import  Map
 import json
+
 # 设置窗口，全局参数设置
+from config_loader import load_config, dict_controls
+config=load_config("config.yaml")
+
+WINDOW_WIDTH=config['windows']['window']['width']
+WINDOW_HEIGHT=config['windows']['window']['height']
+DEBUG_MODE=config['windows']['debug']['DEBUG_MODE']
+GAMEMODE=config['game']['modes_allowed']
+CURRENT_GAME_MODE=config['game']['current_mode']
+
+'''弃用硬编码，使用配置文件
 WINDOW_WIDTH = 800
 WINDOW_HEIGHT = 600
 DEBUG_MODE= False
+GAMEMODE=["POINT","ONE_LIFE"]
+'''
 #------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # 地图测试区
 # 定义地图数据
@@ -40,7 +53,6 @@ def load_map_path(json_path,map_id):
         return json.load(f)
 
 def main():
-    # 声明使用全局变量
     global DEBUG_MODE
     # 初始化Pygame
     pygame.init()
@@ -48,12 +60,18 @@ def main():
     pygame.display.set_caption("Player Movement Test")
 
     # 地图路径
-    floor_map_path = os.path.join("..", "map", "floor_map.json")
-    barrier_map_path=os.path.join("..","map","barrier_map.json")
-    collision_map_path=os.path.join("..","map","collision_map.json")
-    floor_map=load_map_path(floor_map_path,"map1")
-    barrier_map=load_map_path(barrier_map_path,"map1")
-    collision_map=load_map_path(collision_map_path,"map1")
+    base_dir = config['assets']['base_dir']
+    maps_config = config['assets']['maps']
+    active_map_id = config['map']['active_id']
+    
+    floor_map_path = os.path.join(base_dir, maps_config['floor'])
+    barrier_map_path = os.path.join(base_dir, maps_config['barrier'])
+    collision_map_path = os.path.join(base_dir, maps_config['collision'])
+    
+    floor_map = load_map_path(floor_map_path, active_map_id)
+    barrier_map = load_map_path(barrier_map_path, active_map_id)
+    collision_map = load_map_path(collision_map_path, active_map_id)
+
     # 创建地图对象
     map_obj = Map()
     map_obj.set_floor_map(floor_map)
@@ -64,41 +82,63 @@ def main():
     clock = pygame.time.Clock()
 
     # 创建玩家对象
-    player_controls = {
-        "up": pygame.K_UP,
-        "down": pygame.K_DOWN,
-        "left": pygame.K_LEFT,
-        "right": pygame.K_RIGHT,
-        "shift": pygame.K_RSHIFT
-    }
-    player2_controls = {
-        "up": pygame.K_w,
-        "down": pygame.K_s,
-        "left": pygame.K_a,
-        "right": pygame.K_d,
-        "shift": pygame.K_LSHIFT
-    }
-
+    player_1_config = config['players'][0]
+    player_2_config = config['players'][1]
+    player_controls = dict_controls(player_1_config['controls'])
+    player2_controls = dict_controls(player_2_config['controls'])
+    
     player = Player(
-        id=1,
-        x=400,
-        y=300,
+        #读取config
+        id=player_1_config['id'],
         controls=player_controls,
+        speed=player_1_config['speed'],
+        speed_max=player_1_config['speed_max'],
+        bombs_count=player_1_config['bomb_count'],
+        bombs_max=player_1_config['bomb_max'],
+        bomb_power=player_1_config['bomb_power'],
+        bomb_power_max=player_1_config['bomb_power_max'],
         #读取贴图错误时使用红方块代替
-        color=(255, 0, 0)  # 红色
-    )
+        color=(255, 0, 0),
+        game_mode=CURRENT_GAME_MODE,
+        # 日后修改为传参
+        x=player_1_config['spawn']['x'],
+        y=player_1_config['spawn']['y'],
+        sprite_name=config['assets']['sprites_name']['player_4'],
 
+    )
+    player2 = Player(
+        id=player_2_config['id'],
+        controls=player2_controls,
+        speed=player_2_config['speed'],
+        speed_max=player_2_config['speed_max'],
+        bombs_count=player_2_config['bomb_count'],
+        bombs_max=player_2_config['bomb_max'],
+        bomb_power=player_2_config['bomb_power'],
+        bomb_power_max=player_2_config['bomb_power_max'],
+        color=(255, 0, 0),
+        game_mode=CURRENT_GAME_MODE,
+        # 日后修改为传参
+        x=player_2_config['spawn']['x'],
+        y=player_2_config['spawn']['y'],
+        sprite_name=config['assets']['sprites_name']['player_1'],
+    )
+    '''弃用硬编码，使用配置文件
     player2 = Player(
         id=2,
         x=200,
         y=100,
         controls=player2_controls,
         #读取贴图错误时使用红方块代替
-        color=(255, 0, 0)  # 红色
+        color=(255, 0, 0),  # 红色
+        sprite_name="player1_sprite",
+        game_mode=CURRENT_GAME_MODE
     )
+    '''
     # 创建炸弹组
     bombs_group = pygame.sprite.Group()
-
+    # 创建玩家组
+    players_group = pygame.sprite.Group()
+    players_group.add(player, player2)
 
 
     # 主游戏循环
@@ -115,19 +155,22 @@ def main():
                 if event.key == pygame.K_1:
                     DEBUG_MODE = not DEBUG_MODE
         # 更新玩家移动
-        player.move(0, 0,map_obj.collision_rects)  # 调用移动方法
-        player.place_bomb(bombs_group)
-        player2.move(0, 0,map_obj.collision_rects)
-        player2.place_bomb(bombs_group)
-        player.update_player_bomb_cooldown()
-        player2.update_player_bomb_cooldown()
-
+        for player_obj in players_group:
+            #玩家动作
+            player_obj.move(map_obj.collision_rects)
+            player_obj.place_bomb(bombs_group,map_obj)
+            #玩家状态
+            player_obj.update()
         # 泡泡列表信息更新
         for bomb in list(bombs_group):
             bomb.handle_bomb_exploded()
              # 处理爆炸逻辑
             if bomb.exploded and bomb.explosion_timer >= 29 and not bomb.explosion_handled:  # 刚爆炸时且未处理过
-                bomb.handle_explosion(map_obj, bombs_group)
+                bomb.handle_explosion(bombs_group,players_group)
+
+            for player_obj in players_group:
+                if player_obj.ifInExplosion(bomb.explosion_rect):
+                    player_obj.hit_by_bomb(CURRENT_GAME_MODE)
 
         '''
         # 碰撞系统调试
@@ -168,8 +211,8 @@ def main():
                 drawables.append(("tile", tile_name, pos_x, pos_y, feet_y))
 
         # 加入玩家
-        drawables.append(("player", player, player.rect.x, player.rect.y, player.rect.y + 61))  # 64是角色高度
-        drawables.append(("player", player2, player2.rect.x, player2.rect.y, player2.rect.y + 61))
+        for player_obj in players_group:
+            drawables.append(("player", player_obj, player_obj.rect.x, player_obj.rect.y, player_obj.feet_rect.y))
         # 加入泡泡
         for bomb in bombs_group:
             drawables.append(("bomb", bomb, bomb.rect.x, bomb.rect.y, bomb.rect.y))
@@ -190,15 +233,15 @@ def main():
                 p.draw(window)
             elif kind == "bomb":
                 _, bomb_obj, _, _, _ = obj
-                bomb_obj.draw_bomb(window, map_obj)  # 传入地图对象用于爆炸范围计算
-            # 绘制地图碰撞框
-            #map_obj.draw_debug_rect_floor(window,DEBUG_MODE)
+                bomb_obj.draw(window)  # 传入地图对象用于爆炸范围计算
+
+        # 绘制调试信息（在绘制完所有游戏对象之后，避免在循环内重复绘制）
+        if DEBUG_MODE:
             map_obj.draw_debug_rect_barrier(window, DEBUG_MODE)
             map_obj.draw_debug_barrier_coords(window, DEBUG_MODE)  # 显示barrier坐标
             map_obj.draw_debug_rect_collision(window, DEBUG_MODE)
-
-            player.draw_debug_rect(window, DEBUG_MODE)
-            player2.draw_debug_rect(window, DEBUG_MODE)
+            for player_obj in players_group:
+                player_obj.draw_debug_rect(window, DEBUG_MODE)
 
         # 更新显示
         pygame.display.update()

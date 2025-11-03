@@ -1,0 +1,36 @@
+sprites:
+  manbo_sprite:
+    path: "../assets/sprites/player/曼波与哈基米.png"
+    tile_size: 32
+    height: 48
+    width: 48
+    rows: 4
+    cols: 3
+    scale: 1
+    frames: 3
+    # 若整张图左上角有留白或帧之间有空隙，可通过以下偏移与间距修正切图
+    # 根据你素材的实际情况调整数值（像素），默认0即可
+    offset_x: 0
+    offset_y: 0
+    padding_x: 0
+    padding_y: 0
+    mapping:
+      down:  { row: 0, cols: [0, 1, 2] }
+      left:  { rows: 1, cols: [0, 1, 2] }
+      right: { rows: 2, cols: [0, 1, 2] }
+      up:  { rows: 3, cols: [0, 1, 2] }
+
+  hajimi_sprite:
+    path: "../assets/sprites/player/哈基米.png"
+    tile_size: 32
+    height: 48
+    width: 48
+    rows: 4
+    cols: 3
+    scale: 1
+    frames: 3
+    mapping:
+      down:  { rows: 0, cols: [3, 4, 5] }
+      left:  { rows: 1, cols: [3, 4, 5] }
+      right: { rows: 2, cols: [3, 4, 5] }
+      up:  { rows: 3, cols: [3, 4, 5] }
