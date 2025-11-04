@@ -10,10 +10,11 @@ from config_loader import load_config, dict_controls
 from explosion import Explosion
 from item import Item
 from audio_manager import AudioManager
+
 config=load_config("config.yaml")
 config_character=load_config("config_character.yaml")
 config_player=load_config("config_player.yaml")
-
+config_tiles=load_config("config_tile.yaml")
 TILE_SIZE=config["windows"]["tile_size"]
 
 #“输入→更新→碰撞/爆炸→伤害→渲染”的顺序执行
@@ -160,7 +161,6 @@ class GameManager:
     def _handle_draw_obj(self):
         drawables = []
         # 把地图物件加入列表
-        drawables_explosions = []
         for y in range(len(self.map_obj.barrier_map)):
             for x in range(len(self.map_obj.barrier_map[y])):
                 if self.map_obj.barrier_map[y][x] == "empty":
@@ -180,7 +180,9 @@ class GameManager:
         # 加入爆炸区域
         for explosion in self.explosions_group:
             drawables.append(("explosion", explosion, explosion.rect.x, explosion.rect.y, explosion.rect.y))
-        # 按 feet_y 排序 
+        for item in self.items_group:
+            drawables.append(("item", item, item.rect.x, item.rect.y, item.rect.y))
+        # 按 feet_y 排序
         drawables.sort(key=lambda obj: obj[4])
         return drawables
 
@@ -200,18 +202,17 @@ class GameManager:
                 p.draw(self.window)
             elif kind == "bomb":
                 _, bomb_obj, _, _, _ = obj
-                bomb_obj.draw(self.window)  # 传入地图对象用于爆炸范围计算
+                bomb_obj.draw(self.window)  
+            elif kind == "item":
+                _, item_obj, _, _, _ = obj
+                item_obj.draw(self.window)
 
-    def _draw_items(self):
-        for item in self.items_group:
-            item.draw(self.window)
     def _render(self):
         # 绘制画面
         self.window.fill((0, 0, 0))  # 清屏（黑色背景）
         self.map_obj.draw_floor(self.window)
         drawables = self._handle_draw_obj()
         self._draw_sorted_obj(drawables)
-        self._draw_items()
 
         # 绘制调试信息（在绘制完所有游戏对象之后，避免在循环内重复绘制）
         if self.DEBUG_MODE:

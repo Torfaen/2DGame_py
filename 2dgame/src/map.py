@@ -3,7 +3,7 @@ import pygame
 import os
 from config_loader import load_config
 config=load_config("config.yaml")
-
+config_tile=load_config("config_tile.yaml")
 TILE_SIZE=config["windows"]["tile_size"]
 
 import pygame
@@ -43,28 +43,19 @@ class Map:
         self.destroyed_blocks = []
         # 贴图字典，用于自动加载文件夹内贴图,全部存入 self.tiles
         self.tiles = {}
-        tiles_path = os.path.join("..", "assets", "sprites", "background","map_base")
-        for filename in os.listdir(tiles_path):
-            if filename.endswith(".png"):
-                # 去掉扩展名
-                name = os.path.splitext(filename)[0]
-                img_path = os.path.join(tiles_path, filename)
-                self.tiles[name] = pygame.image.load(img_path).convert_alpha()
+        self.load_tiles()
 
-    '''老的贴图加载方式，弃用
-        # 创建精灵表对象
-        sprite_sheet = SpriteSheet(os.path.join("..","assets", "sprites", "background", "map_base", "obj.png"))
-        # 提取不同元素
-        # 草地 (0,0) - 32x32
-        self.grass = sprite_sheet.get_sprite(0, 0, 32, 32)
-        # 树木 (0,32) - 32x32
-#        self.tree = sprite_sheet.get_sprite(32, 32, 32, 32)
-        # 房屋 (32,0) - 32x32
-        self.house = sprite_sheet.get_sprite(32, 0, 32, 64)
-        # 水 (32,32) - 32x32
-        self.water = sprite_sheet.get_sprite(32, 32, 32, 32)
-    '''
-    def get_size(self):
+    def load_tiles(self):
+        for tile_name, tile_config in config_tile['tiles'].items():
+            try:
+                tile_path = tile_config['path']
+                tile_image = pygame.image.load(tile_path).convert_alpha()
+                self.tiles[tile_name] = tile_image
+            except Exception as e:
+                print(f"加载贴图失败: {tile_name} - {e}")
+                continue
+
+    def get_map_size(self):
         x_size_grid=self.barrier_map[0].length
         y_size_grid=self.barrier_map.length
         return x_size_grid,y_size_grid
@@ -192,27 +183,13 @@ class Map:
                             if not rect.collidepoint(target_rect.center)]
                             
     def draw_tile(self, window, tile_name, x, y):
-        '''老的绘制贴图方式
-        """绘制指定类型的瓷砖,在指定的坐标（x，y）"""
-        draw_x = x * self.tile_size
-        draw_y = y * self.tile_size - (tile_name.get_height() - self.tile_size)
-
-        if tile_name == "grass":
-            window.blit(self.grass, (draw_x, draw_y))
-        elif tile_name == "tree":
-            window.blit(self.tree, (draw_x, draw_y))
-        elif tile_name == "house":
-            window.blit(self.house, (draw_x, draw_y))
-        elif tile_name == "water":
-            window.blit(self.water, (draw_x, draw_y))
-        '''
         if tile_name not in self.tiles :
             print(f"没有找到名为 {tile_name} 的贴图")
             return
         image = self.tiles[tile_name]
         # 底部对齐
         draw_x = x
-        draw_y = y  - (image.get_height() - self.tile_size)
+        draw_y = y  - (image.get_height() - self.tile_size)-config_tile['tiles'][tile_name]['anchor_y']
         window.blit(image, (draw_x, draw_y))
 
 
