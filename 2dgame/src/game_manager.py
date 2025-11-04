@@ -134,7 +134,7 @@ class GameManager:
                 return   map_all[map_id]
             except KeyError:
                 print(f"警告：地图ID {map_id} 不存在")
-                return map_all[0]
+                return None
             except json.JSONDecodeError:
                 print(f"警告：无法加载地图文件 {json_path}")
                 return None
