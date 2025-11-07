@@ -2,7 +2,7 @@ import pygame
 import os
 from bomb import Bomb
 from config_loader import load_config
-
+from collections import deque
 OFFSET_X = 24
 OFFSET_Y = 56
 
@@ -22,6 +22,8 @@ class Player(pygame.sprite.Sprite):
 
         #控制键位
         self.controls = controls
+        self.DIRECTION_KEYS = ("left", "right", "up", "down")
+        self.keys_queue=deque()
         # 贴图相关
         # 玩家贴图
         # 临时填充颜色，后续版本改为传参
@@ -54,6 +56,13 @@ class Player(pygame.sprite.Sprite):
         # 核心属性,道具改变
         self.speed = speed
         self.speed_max = speed_max
+        # 移动相关
+        # 速度x,y分量
+        self.dx=0
+        self.dy=0
+        self.moved= False
+
+
         self.bombs_count = bombs_count
         self.bombs_max = bombs_max
         self.hit_box=None
@@ -135,6 +144,21 @@ class Player(pygame.sprite.Sprite):
         grid_y = int(self.feet_y // TILE_SIZE)
 
         return grid_x, grid_y
+
+    
+    def update(self):
+        """更新玩家内部状态（每帧调用）"""
+        if not self.alive:
+            self.die()
+        self._update_player_bomb_cooldown()
+        self._update_player_hitbox()
+        self._update_direction()
+        self._update_velocity()
+        self._update_player_id_flg()
+        self._update_frameIndex()
+        self._update_image()
+
+
     def _update_player_id_flg(self):
         self.id_flg_rect.center = (self.feet_x, self.feet_y)
     def _update_player_hitbox(self):
@@ -144,17 +168,36 @@ class Player(pygame.sprite.Sprite):
         y=grid_y * TILE_SIZE
         self.hit_box = pygame.Rect(x,
         y,TILE_SIZE, TILE_SIZE)
-
-    def update(self):
-        """更新玩家内部状态（每帧调用）"""
-        if not self.alive:
-            self.die()
-        self._update_player_bomb_cooldown()
-        self._update_player_hitbox()
-        self._update_player_id_flg()
-        self._update_frameIndex()
-        self._update_image()
-
+    
+    def update_keys_queue(self,event):
+        for key in self.DIRECTION_KEYS:
+            #按下方向键
+            if event.key == self.controls[key]:
+                #按住方向键，加入队列
+                if event.type == pygame.KEYDOWN and key not in self.keys_queue:
+                    self.keys_queue.append(key)
+                #松开方向键，移除队列
+                elif event.type == pygame.KEYUP and key in self.keys_queue:
+                    self.keys_queue.remove(key)
+                #加break，没按的不判断，只判断按下的
+                break
+    def update_position(self,collision_rects):
+        # 记录移动前坐标
+            old_x, old_y = self.rect.x, self.rect.y
+            old_feet_x, old_feet_y = self.feet_x, self.feet_y
+            # 模型坐标
+            self.rect.x+=self.dx
+            self.rect.y+=self.dy
+            # 锚点坐标
+            self.feet_x+=self.dx
+            self.feet_y+=self.dy
+            # 同步 feet_rect 位置
+            self.feet_rect.center = (self.feet_x, self.feet_y)
+            if self.moved:
+                for rect in collision_rects:
+                    if self.if_in_collision(rect, old_feet_x, old_feet_y):
+                        self.revert_move(old_x, old_y, old_feet_x, old_feet_y)
+                        break
     def _update_frameIndex(self):
         if self.moved:
             self.player_frame_counter += 1
@@ -189,85 +232,50 @@ class Player(pygame.sprite.Sprite):
         if self.bomb_cooldown > 0:
             self.bomb_cooldown -= 1
 
-
-    def handle_bomb_group(self, bombs_group,map_obj):
-        # 检查当前想激活的泡泡是否合法，移除已经爆炸的泡泡
-        self.bombs_active = [b for b in self.bombs_active if not b.exploded]
-        if len(self.bombs_active) >= self.bombs_count:
-            return None
-        grid_x,grid_y=self._get_feetgrid_position()
-        x = grid_x * TILE_SIZE
-        y = grid_y * TILE_SIZE
-        for bomb in self.bombs_active:
-            if bomb.rect.x == x and bomb.rect.y == y:
-                return None
-        bomb_new=Bomb(x,y,self.bomb_power,map_obj=map_obj)
-        self.bombs_active.append(bomb_new)
-        #合法的泡泡添加进容器
-        bombs_group.add(bomb_new)
-        #放下泡泡，开始冷却
-        self.bomb_cooldown = self.bomb_cooldown_max
-        return bomb_new
-
-    def place_bomb(self, bombs_group,map_obj):
-        """按键长按检测版：按下就尝试放置炸弹"""
-        keys = pygame.key.get_pressed()
-        if keys[self.controls["shift"]] and self.bomb_cooldown <= 0:
-            self.handle_bomb_group(bombs_group,map_obj)
     #
-    def handle_input(self):
-        
-        key = pygame.key.get_pressed()
-        if key[self.controls["left"]]:
-            dx=-self.speed
-            dy=0
-            self.moved=True
-            self.direction="left"
-            
-        elif key[self.controls["right"]]:
-            dx=self.speed
-            dy=0
-            self.moved=True
-            self.direction="right"
-        elif key[self.controls["up"]]:
-            dx=0
-            dy=-self.speed
-            self.moved=True
-            self.direction="up"
-        elif key[self.controls["down"]]:
-            dx=0
-            dy=self.speed
-            self.moved=True
-            self.direction="down"
+    def _update_direction(self):
+        if self.keys_queue:
+            direction = self.keys_queue[-1]
         else:
-            dx=0
-            dy=0
+            self.moved = False
+            return
+        if direction == "left":
+            self.moved = True
+            self.direction = "left"
+        elif direction == "right":
+            self.moved = True
+            self.direction = "right"
+        elif direction == "up":
+            self.moved=True
+            self.direction = "up"
+        elif direction == "down":
+            self.moved=True
+            self.direction = "down"
+        else:
             self.moved=False
-        return dx,dy
-
-
-    def move(self,dx,dy,collision_rects):
-        # 记录移动前坐标
-        old_x, old_y = self.rect.x, self.rect.y
-        old_feet_x, old_feet_y = self.feet_x, self.feet_y
-        # 模型坐标
-        self.rect.x+=dx
-        self.rect.y+=dy
-        # 锚点坐标
-        self.feet_x+=dx
-        self.feet_y+=dy
-        # 同步 feet_rect 位置
-        self.feet_rect.center = (self.feet_x, self.feet_y)
-        if self.moved:
-            for rect in collision_rects:
-                #老的障碍判断逻辑，弃用
-                #if self.feet_rect.colliderect(rect):
-                if self._if_in_collision(rect, old_feet_x, old_feet_y):
-                    self._revert_move(old_x, old_y, old_feet_x, old_feet_y)
-                    break
+    #更新速度，根据方向队列，更新速度
+    def _update_velocity(self):
+        self.dx=0
+        self.dy=0
+        if self.moved==True:
+            if self.direction == "left":
+                self.dx=-self.speed
+                self.dy=0
+            elif self.direction == "right":
+                self.dx=self.speed
+                self.dy=0
+            elif self.direction == "up":
+                self.dx=0
+                self.dy=-self.speed
+            elif self.direction == "down":
+                self.dx=0
+                self.dy=self.speed
+        else :
+            self.dx=0
+            self.dy=0
 
    
-    def _if_in_collision(self,rect, old_feet_x, old_feet_y):
+    def if_in_collision(self,rect, old_feet_x, old_feet_y):
         # 检查玩家之前是否在障碍内
         old_feet_rect = pygame.Rect(0, 0, 5, 5)
         old_feet_rect.center = (old_feet_x, old_feet_y)
@@ -284,7 +292,7 @@ class Player(pygame.sprite.Sprite):
         return False
 
 
-    def _revert_move(self,old_x,old_y,old_feet_x,old_feet_y):
+    def revert_move(self,old_x,old_y,old_feet_x,old_feet_y):
         #遇到障碍，移动回滚
          self.rect.x, self.rect.y = old_x, old_y
          self.feet_x, self.feet_y = old_feet_x, old_feet_y

@@ -291,14 +291,12 @@ class GameManager:
         '''更新玩家动作'''
         for player_obj in self.players_group:
             #玩家动作
-            dx,dy=player_obj.handle_input()
-            player_obj.move(dx,dy,self.map_obj.collision_rects)
-            self.place_bomb(player_obj,self.bombs_group)
+            player_obj.update_position(self.map_obj.collision_rects)
+            self._place_bomb(player_obj,self.bombs_group)
             #玩家状态
             player_obj.update()
 
-
-    def place_bomb(self,player,bombs_group):
+    def _place_bomb(self,player,bombs_group):
         """按键长按检测版：按下就尝试放置炸弹"""
         keys = pygame.key.get_pressed()
         if keys[player.controls["shift"]] and player.bomb_cooldown <= 0:
@@ -560,6 +558,7 @@ class GameManager:
         """处理 pygame 输入事件，不包含游戏逻辑"""
         events = pygame.event.get()
         for event in events:
+            # 全局输入事件处理
             if event.type == pygame.QUIT:
                 self.running = False
             elif event.type == pygame.KEYDOWN:
@@ -567,4 +566,8 @@ class GameManager:
                     self.DEBUG_MODE = not self.DEBUG_MODE
                 if event.key == pygame.K_r and self.state == "ended":
                     self._restart_game()
-
+            # 玩家输入事件处理,用于维护keys_queue队列
+            if event.type == pygame.KEYDOWN or event.type == pygame.KEYUP:
+                for player in self.players_group:
+                    player.update_keys_queue(event)
+            

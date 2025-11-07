@@ -52,21 +52,18 @@ def load_map():
     pass
 #---------------------测试区--------------------------------------------------------------------
 def main():
-    '''    items=config_items["items"]["speed_up"]
-        path=items["sprite_path"]
-        width=items["width"]
-        height=items["height"]
-        rows=items["rows"]
-        cols=items["cols"]
-        scale=1
-        name=items["name"]
-        output_path=os.path.join("..", "assets", "sprites", "raw")
-        sprites=get_sprite(path,width,height,rows,cols,scale)
-        output_sprites(sprites,name,output_path)'''
-    items=config_items["items"]
-    items_keys = list(items.keys())  # 获取所有种类，如 ['speed_up', 'speed_max', ...]
-    print(items_keys)
+    pygame.init()
+    pygame.display.set_mode((100, 100))
 
+    while True:
+        events = pygame.event.get()
+        for event in events:
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return
+        while(1):
+            key = pygame.key.get_pressed()
+            print(key)
 
 if __name__ == "__main__":
     main()
