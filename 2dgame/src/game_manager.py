@@ -8,7 +8,7 @@ from bomb import Bomb
 import json
 from config_loader import load_config, dict_controls
 from explosion import Explosion
-from item import Item
+from item import BaseItem
 from audio_manager import AudioManager
 from screen_manager import ScreenManager
 from screen import MainMenu, BlueWd
@@ -293,8 +293,15 @@ class GameManager:
             #玩家动作
             player_obj.update_position(self.map_obj.collision_rects)
             self._place_bomb(player_obj,self.bombs_group)
+            self._get_item(player_obj)
             #玩家状态
             player_obj.update()
+
+    def _get_item(self,player_obj):
+        for item in self.items_group:
+            if self._ifGetItem(player_obj, item):
+                item.apply(player_obj)
+                item.alive = False
 
     def _place_bomb(self,player,bombs_group):
         """按键长按检测版：按下就尝试放置炸弹"""
@@ -340,11 +347,9 @@ class GameManager:
 
     def _update_item(self):
          for item in list(self.items_group):
-            for player in list(self.players_group):
-                if self._ifGetItem(player, item):          
-                    item_effect = item.get_effect()
-                    player.update_item_effect(item_effect)
-                    item.alive = False
+            if not item.alive:
+                self.items_group.remove(item)
+                continue
             item.update()
 
 
@@ -393,7 +398,7 @@ class GameManager:
         drop_rate = 0.3  # 可以放在配置文件中，或者在 __init__ 中初始化
         if random.random() < drop_rate:
             x_grid,y_grid= destroyed_block
-            item = Item.create_random(x_grid*TILE_SIZE, y_grid*TILE_SIZE)
+            item = BaseItem.create_random(x_grid * TILE_SIZE, y_grid * TILE_SIZE)
             self.items_group.add(item)
 
     def _handle_chain_explosion(self, explosion):
@@ -453,6 +458,7 @@ class GameManager:
 
     #返回是否碰到物品
     def _ifGetItem(self, player,item):
+        #没有道具，不检测，节省资源
         if not item:
             return False
         if player.hit_box.colliderect(item.hit_box):
@@ -491,7 +497,6 @@ class GameManager:
         for item_obj in self.items_group:
             if self._ifInExplosion(item_obj,explosions_rects):
                 item_obj.alive = False
-                self.items_group.remove(item_obj)
     #处理道具效果，根据道具名字做判断，道具效果生效
 
 
