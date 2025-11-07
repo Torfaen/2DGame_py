@@ -90,7 +90,7 @@ class Player(pygame.sprite.Sprite):
         self._load_sprite_id_flg()
     def _load_sprite_shadow(self):
         try:
-            shadow_path = os.path.join("..", "assets", "sprites", "player", "map_base", "shadow.png")
+            shadow_path = os.path.join("..", "assets", "sprites", "player", "shadow.png")
             self.image_shadow = pygame.image.load(shadow_path)
             # self.image_shadow = pygame.transform.scale(self.image_shadow, (50, 20))  # 按需缩放
         except (pygame.error, FileNotFoundError) as e:
@@ -214,14 +214,16 @@ class Player(pygame.sprite.Sprite):
         keys = pygame.key.get_pressed()
         if keys[self.controls["shift"]] and self.bomb_cooldown <= 0:
             self.handle_bomb_group(bombs_group,map_obj)
-
+    #
     def handle_input(self):
+        
         key = pygame.key.get_pressed()
         if key[self.controls["left"]]:
             dx=-self.speed
             dy=0
             self.moved=True
             self.direction="left"
+            
         elif key[self.controls["right"]]:
             dx=self.speed
             dy=0
