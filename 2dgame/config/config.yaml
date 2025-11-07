@@ -1,8 +1,8 @@
 windows:
   title: "Player Movement Test"
   window:
-    width: 800
-    height: 600
+    width: 955
+    height: 720
   fps: 60
   tile_size: 32
 
@@ -16,10 +16,6 @@ game:
 
 assets:
   base_dir: ".."
-  maps:
-    floor: "map/floor_map.json"
-    barrier: "map/barrier_map.json"
-    collision: "map/collision_map.json"
   sprites_path:
     player_1: "player/player1_sprite"
     player_2: "player/player2_sprite"
@@ -38,10 +34,3 @@ assets:
     hajimi: "hajimi_sprite"
 
     # 可继续扩展
-
-map:
-  active_id: "map1"
-  tile_size_override: null  # 若要覆盖 Map 内默认 tile 大小
-  width:  25
-  height: 19  # 600 / 32 = 18.75，使用19格
-

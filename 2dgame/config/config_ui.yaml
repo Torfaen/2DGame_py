@@ -1,0 +1,30 @@
+ui:
+  screens:
+    main_menu:
+      name: "main_menu"
+      image_path: "../assets/bg/bg.png"
+      width: 955
+      height: 720
+  buttons:
+    play:
+      name: "play"
+      image_path: "../assets/bg/startgame.png"
+      width: 100
+      height: 100
+  ui_elements:
+    gameover:
+      name: "gameover"
+      image_path: "../assets/bg/gameover.png"
+      width: 270
+      height: 41
+  side_panel:
+    name: "side_panel"
+    image_path: "../assets/bg/side_panel.png"
+    width: 200
+    height: 600
+
+  blue_wd:
+    name: "blue_wd"
+    image_path: "../assets/bg/blue_wd_720.png"
+    width: 1433
+    height: 1080

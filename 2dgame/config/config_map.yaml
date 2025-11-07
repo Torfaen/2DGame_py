@@ -1,0 +1,17 @@
+map:
+  base_dir: ".."
+  floor: "map/floor_map.json"
+  barrier: "map/barrier_map.json"
+  collision: "map/collision_map.json"
+
+  map1:
+  map_id: "01"
+  map_name: "map1"
+  width:  17
+  height: 15  
+  spawn_points:
+    - { grid_x: 1,  grid_y: 2  }
+    - { grid_x: 14, grid_y: 12 }
+    - { grid_x: 13, grid_y: 1  }
+    - { grid_x: 1,  grid_y: 11 }
+

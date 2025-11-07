@@ -2,11 +2,13 @@ import pygame
 import os
 from bomb import Bomb
 from config_loader import load_config
+
 OFFSET_X = 24
 OFFSET_Y = 56
 
 config=load_config("config.yaml")
 config_sprite=load_config("config_sprite.yaml")
+config_player=load_config("config_player.yaml")
 
 FPS=config["windows"]["fps"]
 TILE_SIZE=config["windows"]["tile_size"]
@@ -29,8 +31,11 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.height = config_sprite['sprites'][sprite_name]['height']
         self.width = config_sprite['sprites'][sprite_name]['width']
-
-
+        #flg,显示玩家是几p
+        self.id_flg = None
+        self.id_flg_rect = None
+        self.flg_width = config_player[f'player{self.id}']['flg_width']
+        self.flg_height = config_player[f'player{self.id}']['flg_height']
         #出生点
         self.rect.x = x
         self.rect.y = y
@@ -82,14 +87,24 @@ class Player(pygame.sprite.Sprite):
         # 阴影贴图加载
         self._load_sprite()
         self._load_sprite_shadow()
+        self._load_sprite_id_flg()
     def _load_sprite_shadow(self):
         try:
-            shadow_path = os.path.join("..", "assets", "sprites", "background", "map_base", "shadow.png")
+            shadow_path = os.path.join("..", "assets", "sprites", "player", "map_base", "shadow.png")
             self.image_shadow = pygame.image.load(shadow_path)
             # self.image_shadow = pygame.transform.scale(self.image_shadow, (50, 20))  # 按需缩放
         except (pygame.error, FileNotFoundError) as e:
             print(f"警告：无法加载阴影图片 ({e})")
             self.image_shadow = None
+    def _load_sprite_id_flg(self):
+        try:
+            id_flg_path = config_player[f'player{self.id}']['id_flg_path']
+            self.id_flg = pygame.image.load(id_flg_path).convert_alpha()
+            self.id_flg_rect = self.id_flg.get_rect()
+
+        except (pygame.error, FileNotFoundError) as e:
+            print(f"警告：无法加载id_flg图片 ({e})")
+            self.id_flg = None
 
     def _load_sprite(self):
         # 加载玩家贴图,后续版本改为传参形式选角色
@@ -120,7 +135,8 @@ class Player(pygame.sprite.Sprite):
         grid_y = int(self.feet_y // TILE_SIZE)
 
         return grid_x, grid_y
-
+    def _update_player_id_flg(self):
+        self.id_flg_rect.center = (self.feet_x, self.feet_y)
     def _update_player_hitbox(self):
         # 更新玩家碰撞框
         grid_x, grid_y = self._get_feetgrid_position()
@@ -135,6 +151,7 @@ class Player(pygame.sprite.Sprite):
             self.die()
         self._update_player_bomb_cooldown()
         self._update_player_hitbox()
+        self._update_player_id_flg()
         self._update_frameIndex()
         self._update_image()
 
@@ -285,7 +302,12 @@ class Player(pygame.sprite.Sprite):
         else:
             # 没有贴图，绘制一个矩形代替角色
             pygame.draw.rect(window, self.color, (self.rect.x, self.rect.y, 50, 50))
-
+        
+    def draw_id_flg(self, window):
+        if self.id_flg:
+            x=self.feet_x - self.flg_width/2
+            y=self.feet_y - OFFSET_Y - self.flg_height/2
+            window.blit(self.id_flg, (x, y))
 
     def draw_debug_rect(self, window,DEBUG_MODE):
         if DEBUG_MODE:

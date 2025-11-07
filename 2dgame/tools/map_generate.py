@@ -73,6 +73,14 @@ def create_collision_map(barrier_map_data,unbroken_map_data):
                 #空地
                 row.append(0)
         collision_map_data.append(row)
+    #外圈全部变为2
+    for i in range(len(collision_map_data[0])):
+        collision_map_data[0][i]=2
+        collision_map_data[-1][i]=2
+    for i in range(len(collision_map_data)):
+        collision_map_data[i][0]=2
+        collision_map_data[i][-1]=2
+
     return collision_map_data
 
 

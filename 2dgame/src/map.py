@@ -4,6 +4,7 @@ import os
 from config_loader import load_config
 config=load_config("config.yaml")
 config_tile=load_config("config_tile.yaml")
+config_map=load_config("config_map.yaml")
 TILE_SIZE=config["windows"]["tile_size"]
 
 import pygame
@@ -32,7 +33,7 @@ class SpriteSheet:
 
 class Map:
     def __init__(self):
-        self.tile_size=32
+        self.tile_size=TILE_SIZE
         self.collision_map = None
         self.floor_map= None
         self.barrier_map = None
@@ -184,7 +185,8 @@ class Map:
                             
     def draw_tile(self, window, tile_name, x, y):
         if tile_name not in self.tiles :
-            print(f"没有找到名为 {tile_name} 的贴图")
+            if tile_name!="empty":
+                print(f"没有找到名为 {tile_name} 的贴图")
             return
         image = self.tiles[tile_name]
         # 底部对齐

@@ -10,17 +10,23 @@ from config_loader import load_config, dict_controls
 from explosion import Explosion
 from item import Item
 from audio_manager import AudioManager
+from screen_manager import ScreenManager
+from screen import MainMenu, BlueWd
+
 
 config=load_config("config.yaml")
 config_character=load_config("config_character.yaml")
 config_player=load_config("config_player.yaml")
 config_tiles=load_config("config_tile.yaml")
+config_map=load_config("config_map.yaml")
+config_ui=load_config("config_ui.yaml")
+
 TILE_SIZE=config["windows"]["tile_size"]
 
 #“输入→更新→碰撞/爆炸→伤害→渲染”的顺序执行
 class GameManager:
     def __init__(self, config):
-        self.config = config
+        self.map_surf = None
         self.map_obj = None
         self.player = None
         self.player2 = None
@@ -29,7 +35,7 @@ class GameManager:
         self.players_group = None
         self.explosions_group = None
         self.items_group = None
-
+        
         self.audio_manager = AudioManager()
 
         self.clock = None
@@ -45,25 +51,46 @@ class GameManager:
     def init(self):
         pygame.init()
         self._init_window()
+        self._init_screen()
+        self._init_game_surf()
+        #暂替UI，之后写进逻辑
+        self._init_blue_wd()
         self._load_maps()
         self._load_players()
         self._init_groups()
+    #暂替UI，之后写进逻辑
+    def _init_blue_wd(self):
+        self.blue_wd=BlueWd(self.window,config_ui)
+
+    def _init_screen(self):
+        self.screen_manager=ScreenManager(self.window)
+        self.screen_manager.add_screen("main_menu",MainMenu(self.window,config_ui))
+        self.screen_manager.switch_screen("main_menu")
+        self.screen_manager.run()
+
 
     def _init_window(self):
-        width = self.config['windows']['window']['width']
-        height = self.config['windows']['window']['height']
+        width = config['windows']['window']['width']
+        height = config['windows']['window']['height']
         self.window = pygame.display.set_mode((width, height))
         self.clock = pygame.time.Clock()
-        pygame.display.set_caption(self.config['windows']['title'])
+        pygame.display.set_caption(config['windows']['title'])
+    #离屏画布初始化
+    def _init_game_surf(self):
+        #格子宽度长度
+        self.map_width = config_map['map']['width']
+        self.map_height = config_map['map']['height']
+        self.map_surf = pygame.Surface((self.map_width * TILE_SIZE, self.map_height * TILE_SIZE),pygame.SRCALPHA,32).convert_alpha()
+       
 
     def _load_audio(self):
         self.audio_manager.load_sounds()
     
     def _load_maps(self):
         # 地图路径
-        base_dir = self.config['assets']['base_dir']
-        maps_config = self.config['assets']['maps']
-        active_map_id = self.config['map']['active_id']
+        base_dir = config_map['map']['base_dir']
+        maps_config = config_map['map']
+        active_map_id = config_map['map']['map_name']
         
         floor_map_path = os.path.join(base_dir, maps_config['floor'])
         barrier_map_path = os.path.join(base_dir, maps_config['barrier'])
@@ -90,6 +117,10 @@ class GameManager:
 
         character_1_config = config_character['characters']['manbo']
         character_2_config = config_character['characters']['hajimi']
+
+        spawn_points = self._random_spawn()
+
+
         self.player = Player(
             id=player_1_config['id'],
             controls=player_controls,
@@ -103,8 +134,8 @@ class GameManager:
             color=(255, 0, 0),
             game_mode=self.CURRENT_GAME_MODE,
             # 日后修改为传参
-            x=player_1_config['spawn']['x'],
-            y=player_1_config['spawn']['y'],
+            x=spawn_points[0]['grid_x']*TILE_SIZE,
+            y=spawn_points[0]['grid_y']*TILE_SIZE,
             sprite_name=character_1_config['sprite'],
 
         )
@@ -120,24 +151,25 @@ class GameManager:
             color=(255, 0, 0),
             game_mode=self.CURRENT_GAME_MODE,
             # 日后修改为传参
-            x=player_2_config['spawn']['x'],
-            y=player_2_config['spawn']['y'],
+            x=spawn_points[1]['grid_x']*TILE_SIZE,
+            y=spawn_points[1]['grid_y']*TILE_SIZE,
             sprite_name=character_2_config['sprite'],
         )
         
 
-    def _load_map_path(self,json_path,map_id):
+    def _load_map_path(self, json_path, map_name):
         """从JSON文件加载地图数据"""
         with open(json_path, 'r', encoding='utf-8') as f:
             map_all=json.load(f)
             try:
-                return   map_all[map_id]
+                return   map_all[map_name]
             except KeyError:
-                print(f"警告：地图ID {map_id} 不存在")
+                print(f"警告：地图ID {map_name} 不存在")
                 return None
             except json.JSONDecodeError:
                 print(f"警告：无法加载地图文件 {json_path}")
                 return None
+
 
 
     def _init_groups(self):
@@ -151,12 +183,18 @@ class GameManager:
 
     def run(self):
         while self.running:
-            self.clock.tick(self.config['windows']['fps'])
+            self.clock.tick(config['windows']['fps'])
             self._handle_events()
             self.update()
+            self._render_ui()
             self._render()
             pygame.display.update()
         pygame.quit()
+        
+    def _random_spawn(self):
+        spawn_points = config_map['map']['spawn_points']
+        random.shuffle(spawn_points)
+        return spawn_points
 
     def _handle_draw_obj(self):
         drawables = []
@@ -191,45 +229,64 @@ class GameManager:
         for obj in drawables:
             if obj[0] == "explosion":
                 _, explosion, x, y, _ = obj
-                explosion.draw(self.window)
+                explosion.draw(self.map_surf)
         #2.绘制地图物件
         for obj in drawables:
             now_obj = obj
             kind = obj[0]
             if kind == "tile":
                 _, tile_name, x, y, _ = obj
-                self.map_obj.draw_tile(self.window, tile_name, x, y)
+                self.map_obj.draw_tile(self.map_surf, tile_name, x, y)
             elif kind == "player":
                 _, p, _, _, _ = obj
-                p.draw(self.window)
+                p.draw(self.map_surf)
+                p.draw_id_flg(self.map_surf)
             elif kind == "bomb":
                 _, bomb_obj, _, _, _ = obj
-                bomb_obj.draw(self.window) 
+                bomb_obj.draw(self.map_surf) 
             elif kind == "item":
                 _, item_obj, _, _, _ = obj
-                item_obj.draw(self.window)
+                item_obj.draw(self.map_surf)
 
+    def _render_ui(self):
+        self.blue_wd.draw(self.window)
     def _render(self):
         # 绘制画面
-        self.window.fill((0, 0, 0))  # 清屏（黑色背景）
-        self.map_obj.draw_floor(self.window)
+        
+        self.map_surf.fill((0, 0, 0, 0))  # 保留透明背景
+
+        self.map_obj.draw_floor(self.map_surf)
+
         drawables = self._handle_draw_obj()
         self._draw_sorted_obj(drawables)
 
         # 绘制调试信息（在绘制完所有游戏对象之后，避免在循环内重复绘制）
         if self.DEBUG_MODE:
-            self.map_obj.draw_debug_rect_barrier(self.window, self.DEBUG_MODE)
-            self.map_obj.draw_debug_barrier_coords(self.window, self.DEBUG_MODE)  # 显示barrier坐标
-            self.map_obj.draw_debug_rect_collision(self.window, self.DEBUG_MODE)
+            self.map_obj.draw_debug_rect_barrier(self.map_surf, self.DEBUG_MODE)
+            self.map_obj.draw_debug_barrier_coords(self.map_surf, self.DEBUG_MODE)  # 显示barrier坐标
+            self.map_obj.draw_debug_rect_collision(self.map_surf, self.DEBUG_MODE)
             for item_obj in self.items_group:
-                item_obj.draw_debug_rect(self.window, self.DEBUG_MODE)
+                item_obj.draw_debug_rect(self.map_surf, self.DEBUG_MODE)
             for player_obj in self.players_group:
-                player_obj.draw_debug_rect(self.window, self.DEBUG_MODE)
-        # 更新显示
-        if self.state =="ended":
+                player_obj.draw_debug_rect(self.map_surf, self.DEBUG_MODE)
+        #self.window.fill((0, 0, 0))
+        #surf宽度变为2.26倍
+        self._render_map_scale(1.5)
+        #显示游戏结束
+        if self.state == "ended":
             self._show_winner()
+
         pygame.display.update()
     
+    def _render_map_scale(self,scale):
+        new_w = int(self.map_surf.get_width() * scale)
+        new_h = int(self.map_surf.get_height() * scale)
+        scaled = pygame.transform.smoothscale(self.map_surf, (new_w, new_h))
+        x= -25
+        y= 0
+        self.window.blit(scaled, (x, y))
+
+
     def _update_player(self):
         '''更新玩家动作'''
         for player_obj in self.players_group:
@@ -470,7 +527,7 @@ class GameManager:
         if self.winner_id is not None:
             """显示胜利者"""
             font = pygame.font.Font(None, 48)
-            winner_text = f"Player {self.winner_id} wins! Press R to restart"
+            winner_text = f"{self.winner_id}P wins! Press R to restart"
             text_surface = font.render(winner_text, True, (255, 255, 255))
             text_rect = text_surface.get_rect(center=(self.window.get_width()/2, self.window.get_height()/2))
         else:

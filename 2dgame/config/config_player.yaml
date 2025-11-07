@@ -1,7 +1,10 @@
 player1:
-    id: 0
+    id: 1
     spawn: { x: 400, y: 300 }
     color: [255, 0, 0]
+    id_flg_path: "../assets/sprites/player/1p_flg.png"
+    flg_width: 16
+    flg_height: 30
     controls:
         up: "K_UP"
         down: "K_DOWN"
@@ -10,9 +13,12 @@ player1:
         shift: "K_RSHIFT"
 
 player2:
-    id: 1
+    id: 2
     spawn: { x: 200, y: 100 }
     color: [255, 0, 0]
+    id_flg_path: "../assets/sprites/player/2p_flg.png"
+    flg_width: 19
+    flg_height: 30
     controls:
         up: "K_w"
         down: "K_s"
