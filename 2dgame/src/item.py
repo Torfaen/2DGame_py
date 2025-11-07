@@ -49,7 +49,7 @@ class Item(pygame.sprite.Sprite):
         # 道具生成xy坐标
         self.rect = pygame.Rect(x, y-anchor_y, width, height)
         self.rect.x = x
-        self.rect.y = y-anchor_y
+        self.rect.y = y
         self.anchor_x = anchor_x
         self.anchor_y = anchor_y
 
@@ -88,7 +88,7 @@ class Item(pygame.sprite.Sprite):
             self.kill()
             
     def draw(self, window):
-        window.blit(self.image, (self.rect.x, self.rect.y))
+        window.blit(self.image, (self.rect.x, self.rect.y-self.anchor_y))
 
     def draw_debug_rect(self, window,DEBUG_MODE):
         if DEBUG_MODE:

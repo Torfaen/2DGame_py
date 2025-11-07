@@ -187,10 +187,12 @@ class GameManager:
         return drawables
 
     def _draw_sorted_obj(self,drawables):
+        #1.绘制爆炸区域
         for obj in drawables:
             if obj[0] == "explosion":
                 _, explosion, x, y, _ = obj
                 explosion.draw(self.window)
+        #2.绘制地图物件
         for obj in drawables:
             now_obj = obj
             kind = obj[0]
@@ -202,7 +204,7 @@ class GameManager:
                 p.draw(self.window)
             elif kind == "bomb":
                 _, bomb_obj, _, _, _ = obj
-                bomb_obj.draw(self.window)  
+                bomb_obj.draw(self.window) 
             elif kind == "item":
                 _, item_obj, _, _, _ = obj
                 item_obj.draw(self.window)

@@ -9,7 +9,7 @@ items:
     width: 32
     height: 48
     anchor_x: 16
-    anchor_y: 12
+    anchor_y: 14
     rows: 1
     cols: 4
     description: "增加移动速度"
@@ -23,7 +23,7 @@ items:
     width: 32
     height: 48
     anchor_x: 16
-    anchor_y: 12
+    anchor_y: 14
     rows: 1
     cols: 4
     description: "增加最大速度"
@@ -37,7 +37,7 @@ items:
     width: 32
     height: 48
     anchor_x: 16
-    anchor_y: 12
+    anchor_y: 14
     rows: 1
     cols: 4
     description: "增加炸弹数量"
@@ -75,7 +75,7 @@ items:
     width: 32
     height: 48
     anchor_x: 16
-    anchor_y: 12
+    anchor_y: 14
     rows: 1
     cols: 4
     description: "增加炸弹威力"
