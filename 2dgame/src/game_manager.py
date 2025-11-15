@@ -26,6 +26,7 @@ TILE_SIZE=config["windows"]["tile_size"]
 #“输入→更新→碰撞/爆炸→伤害→渲染”的顺序执行
 class GameManager:
     def __init__(self, config):
+        self.bgm_played = None
         self.map_surf = None
         self.map_obj = None
         self.player = None
@@ -87,7 +88,7 @@ class GameManager:
         self.audio_manager.load_sounds()
     
     def _load_maps(self):
-        # 地图路径
+        # 地图路径下·
         base_dir = config_map['map']['base_dir']
         maps_config = config_map['map']
         active_map_id = config_map['map']['map_name']
@@ -182,6 +183,9 @@ class GameManager:
         self.items_group = pygame.sprite.Group()
 
     def run(self):
+        if not self.bgm_played:
+            self.audio_manager.play_bgm("village")
+            self.bgm_played=True
         while self.running:
             self.clock.tick(config['windows']['fps'])
             self._handle_events()
@@ -302,6 +306,8 @@ class GameManager:
             if self._ifGetItem(player_obj, item):
                 item.apply(player_obj)
                 item.alive = False
+                #播放音效
+                self.audio_manager.play("item_get")
 
     def _place_bomb(self,player,bombs_group):
         """按键长按检测版：按下就尝试放置炸弹"""

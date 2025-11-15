@@ -2,12 +2,11 @@ audio:
   sounds:
     bomb_place: ../assets/audio/Sound effect/bomb_place.mp3
     explosion: ../assets/audio/Sound effect/bomb_explosion.mp3
-    player_hit: ../assets/audio/Sound effect/player_hit.mp3
+    item_get: ../assets/audio/Sound effect/item_get.mp3
     player_die: ../assets/audio/Sound effect/player_die.mp3
-    player_win: ../assets/audio/Sound effect/player_win.mp3
-    player_lose: ../assets/audio/Sound effect/player_lose.mp3
+
 
   bgm:
-    game_bgm: ../assets/audio/bgm/game_bgm.mp3
+    village: ../assets/audio/bgm/village.mp3
     bgm2: ../assets/audio/bgm/game_bgm.mp3
     bgm3: ../assets/audio/bgm/game_bgm.mp3

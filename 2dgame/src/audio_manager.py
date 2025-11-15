@@ -10,6 +10,7 @@ class AudioManager:
         pygame.mixer.init()
         self.sounds = {}
         self.load_sounds()
+        
 
     def load_sounds(self):
         """
@@ -35,12 +36,13 @@ class AudioManager:
             print(f"Sound {sound_name} not found")
 
 #播放背景音乐loop是循环次数-1表示无限循环，0表示只播放一次，1表示播放2次
-    def play_bgm(self, bgm_name, loop=-1):
+    @staticmethod
+    def play_bgm(bgm_name, loop=-1):
         try:
             # 检查 BGM 是否存在
             if bgm_name in audio_config['bgm']:
                 # 从配置中获取BGM的路径
-                bgm_path = os.path.join("..", audio_config['bgm'][bgm_name])
+                bgm_path = os.path.join(audio_config['bgm'][bgm_name])
                 # 加载背景音乐文件
                 pygame.mixer.music.load(bgm_path)
                 # 播放背景音乐（loop=-1 表示无限循环）
