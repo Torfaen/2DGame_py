@@ -189,7 +189,7 @@ class GameManager:
         while self.running:
             self.clock.tick(config['windows']['fps'])
             self._handle_events()
-            self.update()
+            self._update()
             self._render_ui()
             self._render()
             pygame.display.update()
@@ -506,7 +506,7 @@ class GameManager:
     #处理道具效果，根据道具名字做判断，道具效果生效
 
 
-    def update(self):
+    def _update(self):
         '''“输入→更新→碰撞/爆炸→伤害→渲染”的顺序执行'''
         # 更新玩家移动
         self._update_player()
