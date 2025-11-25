@@ -1,5 +1,6 @@
 from config_loader import load_config
 import pygame
+from path_utils import resolve_relative_path
 config=load_config("config.yaml")
 config_ui=load_config("config_ui.yaml")
 
@@ -11,7 +12,7 @@ class Screen(pygame.sprite.Sprite):
         self.width=width
         self.height=height
         self.rect=pygame.Rect(0, 0, self.width, self.height)
-        self.image_path=path
+        self.image_path=resolve_relative_path(path)
         self.image=pygame.image.load(self.image_path).convert_alpha()
 
     def draw(self,window):
@@ -24,7 +25,7 @@ class BlueWd(Screen):
         cfg_blue_wd=cfg_ui['ui']['blue_wd']
         width=cfg_blue_wd['width']
         height=cfg_blue_wd['height']
-        path=cfg_blue_wd['image_path']
+        path=resolve_relative_path(cfg_blue_wd['image_path'])
         name=cfg_blue_wd['name']
         super().__init__(window,name,width,height,path,x=0,y=0)
         self.image=pygame.image.load(path).convert_alpha()
@@ -40,10 +41,10 @@ class MainMenu(Screen):
         cfg_main_menu=cfg_ui['ui']['screens']['main_menu']
         width=cfg_main_menu['width']
         height=cfg_main_menu['height']
-        path=cfg_main_menu['image_path']
+        path=resolve_relative_path(cfg_main_menu['image_path'])
         name=cfg_main_menu['name']
         super().__init__(window,name,width,height,path,x=0,y=0)
-        self.buttons_start_img=pygame.image.load(cfg_ui['ui']['buttons']['play']['image_path']).convert_alpha()
+        self.buttons_start_img=pygame.image.load(resolve_relative_path(cfg_ui['ui']['buttons']['play']['image_path'])).convert_alpha()
         self.bt_start_rect=self.buttons_start_img.get_rect()
         #按钮坐标
         self.bt_start_rect.x= 750
@@ -51,7 +52,7 @@ class MainMenu(Screen):
         self.bt_start_rect.center=(self.bt_start_rect.x, self.bt_start_rect.y)
 
         #菜单背景
-        self.bg_img=pygame.image.load(cfg_main_menu['image_path']).convert_alpha()
+        self.bg_img=pygame.image.load(resolve_relative_path(cfg_main_menu['image_path'])).convert_alpha()
         self.bg_img=pygame.transform.scale(self.bg_img, (self.width, self.height))
 
     def handle_events(self,events,manager):

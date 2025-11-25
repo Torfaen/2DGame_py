@@ -1,10 +1,12 @@
 from math import e
-import os
 import yaml
 import pygame
 
+from path_utils import resource_path
+
+
 def load_config(config_name):
-    config_path=os.path.join("..", "config", f"{config_name}")
+    config_path = resource_path("config", f"{config_name}")
     with open(config_path, 'r', encoding='utf-8') as f:
         return yaml.safe_load(f)
 

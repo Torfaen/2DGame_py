@@ -2,14 +2,14 @@ import pygame
 import os
 
 from config_loader import load_config
+from path_utils import resource_path
 config_sprite=load_config("config_sprite.yaml")
 config_items=load_config("config_items.yaml")
 def load_sprites():
     # 加载所有帧
     frames = []
     for i in range(1, 4):  # 假设文件名为frame_1.png到frame_3.png
-        os.path.join("..", "assets", "sprites", "player")
-        frame_path = os.path.join("..", "assets", "sprites", "player",f"manbo_sprite_{i}.png")
+        frame_path = resource_path("assets", "sprites", "player", f"manbo_sprite_{i}.png")
         frame = pygame.image.load(frame_path)
         frames.append(frame)
 

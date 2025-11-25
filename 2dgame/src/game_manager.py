@@ -1,4 +1,3 @@
-import os
 import re
 import pygame
 import random
@@ -12,6 +11,7 @@ from item import BaseItem
 from audio_manager import AudioManager
 from screen_manager import ScreenManager
 from screen import MainMenu, BlueWd
+from path_utils import resolve_relative_path
 
 
 config=load_config("config.yaml")
@@ -89,7 +89,7 @@ class GameManager:
     
     def _load_maps(self):
         # 地图路径下·
-        base_dir = config_map['map']['base_dir']
+        base_dir = resolve_relative_path(config_map['map']['base_dir'])
         maps_config = config_map['map']
         active_map_id = config_map['map']['map_name']
         

@@ -1,6 +1,6 @@
 import pygame
-import os
 from config_loader import load_config
+from path_utils import resolve_relative_path
 
 config_audio = load_config("config_audio.yaml")
 audio_config = config_audio['audio']  # 获取 audio 节点下的所有配置
@@ -21,7 +21,7 @@ class AudioManager:
             # 遍历配置文件中的所有音效
             for sound_name, sound_path in audio_config['sounds'].items():  
                 # 加载音效文件，存入字典（sound_name 是键，Sound对象是值）
-                self.sounds[sound_name] = pygame.mixer.Sound(sound_path)
+                self.sounds[sound_name] = pygame.mixer.Sound(resolve_relative_path(sound_path))
         except Exception as e:
             print(f"Error loading sounds: {e}")
 
@@ -42,7 +42,7 @@ class AudioManager:
             # 检查 BGM 是否存在
             if bgm_name in audio_config['bgm']:
                 # 从配置中获取BGM的路径
-                bgm_path = os.path.join(audio_config['bgm'][bgm_name])
+                bgm_path = resolve_relative_path(audio_config['bgm'][bgm_name])
                 # 加载背景音乐文件
                 pygame.mixer.music.load(bgm_path)
                 # 播放背景音乐（loop=-1 表示无限循环）

@@ -1,8 +1,8 @@
 from re import S
 import pygame
-import os
 
 from config_loader import load_config, dict_controls
+from path_utils import resource_path
 config=load_config("config.yaml")
 TILE_SIZE=config["windows"]["tile_size"]
 FPS=config["windows"]["fps"]
@@ -114,15 +114,15 @@ class Explosion(pygame.sprite.Sprite):
         size=(32,32)
         # 判断中心
         if direction == "center":
-            path=os.path.join("..", "assets", "sprites", "bomb", "center.png")
+            path = resource_path("assets", "sprites", "bomb", "center.png")
             image=pygame.image.load(path)
             image = pygame.transform.scale(image,(32,32))
             return image
         # 判断四周爆炸
         if is_end:
-            path=os.path.join("..", "assets", "sprites", "bomb", "explosion_1.png")
+            path = resource_path("assets", "sprites", "bomb", "explosion_1.png")
         else:
-            path=os.path.join("..", "assets", "sprites", "bomb", "explosion_0.png")
+            path = resource_path("assets", "sprites", "bomb", "explosion_0.png")
         #加载泡泡贴图
         try:
             image = pygame.image.load(path)

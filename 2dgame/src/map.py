@@ -1,7 +1,7 @@
 # 在 map.py 文件中创建 Map 类
 import pygame
-import os
 from config_loader import load_config
+from path_utils import resolve_relative_path
 config=load_config("config.yaml")
 config_tile=load_config("config_tile.yaml")
 config_map=load_config("config_map.yaml")
@@ -49,7 +49,7 @@ class Map:
     def load_tiles(self):
         for tile_name, tile_config in config_tile['tiles'].items():
             try:
-                tile_path = tile_config['path']
+                tile_path = resolve_relative_path(tile_config['path'])
                 tile_image = pygame.image.load(tile_path).convert_alpha()
                 self.tiles[tile_name] = tile_image
             except Exception as e:

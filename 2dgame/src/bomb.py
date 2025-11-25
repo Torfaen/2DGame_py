@@ -1,8 +1,8 @@
 from re import S
 import pygame
-import os
 from explosion import Explosion
 from config_loader import load_config, dict_controls
+from path_utils import resource_path
 
 config=load_config("config.yaml")
 TILE_SIZE=config["windows"]["tile_size"]
@@ -60,7 +60,7 @@ class Bomb(pygame.sprite.Sprite):
     
     def _load_bomb_sprite(self):
         size=(32,32)
-        path=os.path.join("..", "assets", "sprites", "bomb", f"idle_{self.bomb_frame_index}.png")
+        path = resource_path("assets", "sprites", "bomb", f"idle_{self.bomb_frame_index}.png")
         #加载泡泡贴图
         try:
             image = pygame.image.load(path)

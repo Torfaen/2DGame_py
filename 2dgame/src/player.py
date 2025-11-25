@@ -3,6 +3,7 @@ import os
 from bomb import Bomb
 from config_loader import load_config
 from collections import deque
+from path_utils import resource_path, resolve_relative_path
 OFFSET_X = 24
 OFFSET_Y = 56
 
@@ -99,7 +100,7 @@ class Player(pygame.sprite.Sprite):
         self._load_sprite_id_flg()
     def _load_sprite_shadow(self):
         try:
-            shadow_path = os.path.join("..", "assets", "sprites", "player", "shadow.png")
+            shadow_path = resource_path("assets", "sprites", "player", "shadow.png")
             self.image_shadow = pygame.image.load(shadow_path)
             # self.image_shadow = pygame.transform.scale(self.image_shadow, (50, 20))  # 按需缩放
         except (pygame.error, FileNotFoundError) as e:
@@ -107,7 +108,7 @@ class Player(pygame.sprite.Sprite):
             self.image_shadow = None
     def _load_sprite_id_flg(self):
         try:
-            id_flg_path = config_player[f'player{self.id}']['id_flg_path']
+            id_flg_path = resolve_relative_path(config_player[f'player{self.id}']['id_flg_path'])
             self.id_flg = pygame.image.load(id_flg_path).convert_alpha()
             self.id_flg_rect = self.id_flg.get_rect()
 
@@ -120,7 +121,7 @@ class Player(pygame.sprite.Sprite):
         sprite_name=self.sprite_name
         images={}
         try:
-            base_path = os.path.join("..", "assets", "sprites", "player", sprite_name)
+            base_path = resource_path("assets", "sprites", "player", sprite_name)
             for direction in self.images.keys():
                 if os.path.exists(base_path):
                     frames=[]
