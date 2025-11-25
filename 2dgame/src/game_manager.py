@@ -12,7 +12,7 @@ from audio_manager import AudioManager
 from screen_manager import ScreenManager
 from screen import MainMenu, BlueWd
 from path_utils import resolve_relative_path
-
+import os
 
 config=load_config("config.yaml")
 config_character=load_config("config_character.yaml")
@@ -189,7 +189,7 @@ class GameManager:
         while self.running:
             self.clock.tick(config['windows']['fps'])
             self._handle_events()
-            self._update()
+            self.update()
             self._render_ui()
             self._render()
             pygame.display.update()
@@ -506,7 +506,7 @@ class GameManager:
     #处理道具效果，根据道具名字做判断，道具效果生效
 
 
-    def _update(self):
+    def update(self):
         '''“输入→更新→碰撞/爆炸→伤害→渲染”的顺序执行'''
         # 更新玩家移动
         self._update_player()
