@@ -12,6 +12,7 @@ class ScreenManager:
         self.current_screen=None
         self.running=True
         self.clock=pygame.time.Clock()
+        self.selected_mode = "pvp"
 
     def add_screen(self,screen_name,screen):
         self.screens[screen_name]=screen
@@ -22,6 +23,9 @@ class ScreenManager:
 
     def quit(self):
         self.running=False
+
+    def set_selected_mode(self, mode):
+        self.selected_mode = mode
 
     def run(self):
         fps=config['windows']['fps']
@@ -36,5 +40,6 @@ class ScreenManager:
                 self.current_screen.handle_events(events,self)
                 self.current_screen.draw(self.window)
                 pygame.display.update()
+        return self.selected_mode
 
         

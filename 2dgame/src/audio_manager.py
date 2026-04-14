@@ -6,9 +6,17 @@ config_audio = load_config("config_audio.yaml")
 audio_config = config_audio['audio']  # 获取 audio 节点下的所有配置
 
 class AudioManager:
-    def __init__(self):
-        pygame.mixer.init()
+    def __init__(self, enabled=True):
+        self.enabled = enabled
         self.sounds = {}
+        if not self.enabled:
+            return
+        try:
+            pygame.mixer.init()
+        except Exception as e:
+            print(f"Audio disabled: {e}")
+            self.enabled = False
+            return
         self.load_sounds()
         
 
@@ -27,6 +35,8 @@ class AudioManager:
 
     #播放音效volume是音量大小0.0-1.0，1.0是最大音量
     def play(self, sound_name, volume=1.0):
+        if not self.enabled:
+            return
         if sound_name in self.sounds:
             # 设置音量
             self.sounds[sound_name].set_volume(volume)
@@ -39,6 +49,8 @@ class AudioManager:
     @staticmethod
     def play_bgm(bgm_name, loop=-1):
         try:
+            if not pygame.mixer.get_init():
+                return
             # 检查 BGM 是否存在
             if bgm_name in audio_config['bgm']:
                 # 从配置中获取BGM的路径

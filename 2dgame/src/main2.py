@@ -1,11 +1,9 @@
-import pygame
-
 from config_loader import load_config
 from game_manager import GameManager
 
 
 def main():
-    config = config=load_config("config.yaml")
+    config = load_config("config.yaml")
     game = GameManager(config)
     game.init()
     game.run()

@@ -147,6 +147,14 @@ class Map:
                 rect = pygame.Rect(x * self.tile_size, y * self.tile_size, self.tile_size, self.tile_size)
                 self.barrier_rects.append(rect)
 
+    def export_layers(self):
+        return {
+            "tile_size": self.tile_size,
+            "floor_map": [row[:] for row in self.floor_map] if self.floor_map else [],
+            "collision_map": [row[:] for row in self.collision_map] if self.collision_map else [],
+            "barrier_map": [row[:] for row in self.barrier_map] if self.barrier_map else [],
+        }
+
     #障碍物破坏部分函数
     def remove_barrier(self, grid_x, grid_y):
         # 如果是不含摧毁的障碍物（值为2），不允许移除

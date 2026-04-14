@@ -6,11 +6,20 @@ ui:
       width: 955
       height: 720
   buttons:
-    play:
-      name: "play"
+    pvp:
+      name: "pvp"
       image_path: "../assets/bg/startgame.png"
       width: 100
       height: 100
+      center_x: 750
+      center_y: 360
+    pve:
+      name: "pve"
+      image_path: "../assets/bg/startgame.png"
+      width: 100
+      height: 100
+      center_x: 750
+      center_y: 470
   ui_elements:
     gameover:
       name: "gameover"

@@ -44,27 +44,40 @@ class MainMenu(Screen):
         path=resolve_relative_path(cfg_main_menu['image_path'])
         name=cfg_main_menu['name']
         super().__init__(window,name,width,height,path,x=0,y=0)
-        self.buttons_start_img=pygame.image.load(resolve_relative_path(cfg_ui['ui']['buttons']['play']['image_path'])).convert_alpha()
-        self.bt_start_rect=self.buttons_start_img.get_rect()
-        #按钮坐标
-        self.bt_start_rect.x= 750
-        self.bt_start_rect.y= 400
-        self.bt_start_rect.center=(self.bt_start_rect.x, self.bt_start_rect.y)
+        self.button_font = pygame.font.Font(None, 36)
+        self.mode_buttons = self._create_mode_buttons(cfg_ui['ui']['buttons'])
 
         #菜单背景
         self.bg_img=pygame.image.load(resolve_relative_path(cfg_main_menu['image_path'])).convert_alpha()
         self.bg_img=pygame.transform.scale(self.bg_img, (self.width, self.height))
 
+    def _create_mode_buttons(self, buttons_cfg):
+        buttons = {}
+        for mode_name, mode_cfg in buttons_cfg.items():
+            image = pygame.image.load(resolve_relative_path(mode_cfg['image_path'])).convert_alpha()
+            rect = image.get_rect()
+            rect.center = (mode_cfg['center_x'], mode_cfg['center_y'])
+            buttons[mode_name] = {
+                "image": image,
+                "rect": rect,
+                "label": mode_cfg['name'].upper(),
+            }
+        return buttons
+
     def handle_events(self,events,manager):
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                #如果点击了开始按钮，则切换到游戏界面
-                if self.bt_start_rect.collidepoint(event.pos):
-                    manager.switch_screen("gameplay")
-                    #临时使用，直接退出当前界面，之后再封装游戏界面进gameplayScreen类，继承screen
-                    manager.quit()
+                for mode_name, button in self.mode_buttons.items():
+                    if button["rect"].collidepoint(event.pos):
+                        manager.set_selected_mode(mode_name)
+                        manager.quit()
+                        break
     
     def draw(self,window):
         window.blit(self.bg_img, (0,0))
-        window.blit(self.buttons_start_img, self.bt_start_rect)
+        for button in self.mode_buttons.values():
+            window.blit(button["image"], button["rect"])
+            text_surface = self.button_font.render(button["label"], True, (255, 255, 255))
+            text_rect = text_surface.get_rect(center=button["rect"].center)
+            window.blit(text_surface, text_rect)
 

@@ -12,6 +12,7 @@ from audio_manager import AudioManager
 from screen_manager import ScreenManager
 from screen import MainMenu, BlueWd
 from path_utils import resolve_relative_path
+from ai_controller import RandomAIController
 import os
 
 config=load_config("config.yaml")
@@ -25,7 +26,8 @@ TILE_SIZE=config["windows"]["tile_size"]
 
 #“输入→更新→碰撞/爆炸→伤害→渲染”的顺序执行
 class GameManager:
-    def __init__(self, config):
+    def __init__(self, config, options=None):
+        options = options or {}
         self.bgm_played = None
         self.map_surf = None
         self.map_obj = None
@@ -36,8 +38,17 @@ class GameManager:
         self.players_group = None
         self.explosions_group = None
         self.items_group = None
-        
-        self.audio_manager = AudioManager()
+        self.config = config
+        self.options = options
+        self.headless = options.get("headless", False)
+        self.skip_menu = options.get("skip_menu", False)
+        self.enable_audio = options.get("enable_audio", not self.headless)
+        self.render_enabled = options.get("render", not self.headless)
+        self.human_controlled_ids = set(options.get("human_controlled_ids", [1, 2]))
+        self.match_mode = options.get("match_mode", "pvp")
+        self.player_lookup = {}
+        self.ai_controller = None
+        self.audio_manager = AudioManager(enabled=self.enable_audio)
 
         self.clock = None
         self.window = None
@@ -52,7 +63,9 @@ class GameManager:
     def init(self):
         pygame.init()
         self._init_window()
-        self._init_screen()
+        if not self.skip_menu:
+            self._init_screen()
+        self._configure_match_mode()
         self._init_game_surf()
         #暂替UI，之后写进逻辑
         self._init_blue_wd()
@@ -67,15 +80,27 @@ class GameManager:
         self.screen_manager=ScreenManager(self.window)
         self.screen_manager.add_screen("main_menu",MainMenu(self.window,config_ui))
         self.screen_manager.switch_screen("main_menu")
-        self.screen_manager.run()
+        self.match_mode = self.screen_manager.run()
+
+    def _configure_match_mode(self):
+        if self.match_mode == "pve":
+            self.human_controlled_ids = {1}
+            self.ai_controller = RandomAIController()
+        else:
+            self.human_controlled_ids = {1, 2}
+            self.ai_controller = None
 
 
     def _init_window(self):
         width = config['windows']['window']['width']
         height = config['windows']['window']['height']
-        self.window = pygame.display.set_mode((width, height))
+        if self.headless:
+            self.window = pygame.display.set_mode((width, height), flags=pygame.HIDDEN)
+        else:
+            self.window = pygame.display.set_mode((width, height))
         self.clock = pygame.time.Clock()
-        pygame.display.set_caption(config['windows']['title'])
+        if not self.headless:
+            pygame.display.set_caption(config['windows']['title'])
     #离屏画布初始化
     def _init_game_surf(self):
         #格子宽度长度
@@ -156,6 +181,10 @@ class GameManager:
             y=spawn_points[1]['grid_y']*TILE_SIZE,
             sprite_name=character_2_config['sprite'],
         )
+        self.player_lookup = {
+            self.player.id: self.player,
+            self.player2.id: self.player2,
+        }
         
 
     def _load_map_path(self, json_path, map_name):
@@ -188,12 +217,24 @@ class GameManager:
             self.bgm_played=True
         while self.running:
             self.clock.tick(config['windows']['fps'])
-            self._handle_events()
-            self.update()
+            self.step_frame()
+        pygame.quit()
+
+    def step_frame(self):
+        self._handle_events()
+        self._apply_ai_actions()
+        self.update()
+        if self.render_enabled:
             self._render_ui()
             self._render()
-            pygame.display.update()
-        pygame.quit()
+            if not self.headless:
+                pygame.display.update()
+
+    def _apply_ai_actions(self):
+        if self.ai_controller is None or self.state != "running":
+            return
+        observation = self.get_state_snapshot()
+        self.set_player_action(2, self.ai_controller.decide(observation))
         
     def _random_spawn(self):
         spawn_points = config_map['map']['spawn_points']
@@ -280,8 +321,6 @@ class GameManager:
         if self.state == "ended":
             self._show_winner()
 
-        pygame.display.update()
-    
     def _render_map_scale(self,scale):
         new_w = int(self.map_surf.get_width() * scale)
         new_h = int(self.map_surf.get_height() * scale)
@@ -310,9 +349,8 @@ class GameManager:
                 self.audio_manager.play("item_get")
 
     def _place_bomb(self,player,bombs_group):
-        """按键长按检测版：按下就尝试放置炸弹"""
-        keys = pygame.key.get_pressed()
-        if keys[player.controls["shift"]] and player.bomb_cooldown <= 0:
+        """按住放弹按钮时，冷却结束就持续放到上限"""
+        if player.bomb_button_held and player.bomb_cooldown <= 0:
             self.create_bomb(player,bombs_group)
 
     def create_bomb(self,player,bombs_group):
@@ -580,5 +618,69 @@ class GameManager:
             # 玩家输入事件处理,用于维护keys_queue队列
             if event.type == pygame.KEYDOWN or event.type == pygame.KEYUP:
                 for player in self.players_group:
-                    player.update_keys_queue(event)
+                    if player.id in self.human_controlled_ids:
+                        player.update_keys_queue(event)
+
+    def get_player(self, player_id):
+        return self.player_lookup.get(player_id)
+
+    def set_player_action(self, player_id, action):
+        player = self.get_player(player_id)
+        if player is None:
+            return
+        player.apply_action(action)
+
+    def clear_player_action(self, player_id):
+        player = self.get_player(player_id)
+        if player is None:
+            return
+        player.apply_action({"move": None, "bomb": False})
+
+    def get_state_snapshot(self):
+        players = {}
+        for player in self.player_lookup.values():
+            players[player.id] = {
+                "alive": player.alive,
+                "grid": player._get_feetgrid_position(),
+                "bombs_count": player.bombs_count,
+                "bomb_power": player.bomb_power,
+                "bomb_cooldown": player.bomb_cooldown,
+                "direction": player.direction,
+                "bomb_button_held": player.bomb_button_held,
+            }
+
+        bombs = []
+        for bomb in self.bombs_group:
+            bombs.append(
+                {
+                    "grid": (bomb.rect.x // TILE_SIZE, bomb.rect.y // TILE_SIZE),
+                    "timer": bomb.timer,
+                    "power": bomb.power,
+                    "exploded": bomb.exploded,
+                }
+            )
+
+        explosions = []
+        for explosion in self.explosions_group:
+            explosions.append([grid_info["pos"] for grid_info in explosion.grids_info])
+
+        items = []
+        for item in self.items_group:
+            items.append(
+                {
+                    "name": item.name,
+                    "grid": (item.rect.x // TILE_SIZE, item.rect.y // TILE_SIZE),
+                }
+            )
+
+        return {
+            "state": self.state,
+            "winner_id": self.winner_id,
+            "alive_count": self.alive_count,
+            "map": self.map_obj.export_layers(),
+            "players": players,
+            "bombs": bombs,
+            "explosions": explosions,
+            "items": items,
+        }
             

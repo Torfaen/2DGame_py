@@ -25,6 +25,7 @@ class Player(pygame.sprite.Sprite):
         self.controls = controls
         self.DIRECTION_KEYS = ("left", "right", "up", "down")
         self.keys_queue=deque()
+        self.bomb_button_held = False
         # 贴图相关
         # 玩家贴图
         # 临时填充颜色，后续版本改为传参
@@ -171,6 +172,9 @@ class Player(pygame.sprite.Sprite):
         y,TILE_SIZE, TILE_SIZE)
     
     def update_keys_queue(self,event):
+        if event.key == self.controls["shift"]:
+            self.bomb_button_held = event.type == pygame.KEYDOWN
+            return
         for key in self.DIRECTION_KEYS:
             #按下方向键
             if event.key == self.controls[key]:
@@ -182,6 +186,30 @@ class Player(pygame.sprite.Sprite):
                     self.keys_queue.remove(key)
                 #加break，没按的不判断，只判断按下的
                 break
+
+    def set_direction_state(self, direction):
+        self.keys_queue.clear()
+        if direction in self.DIRECTION_KEYS:
+            self.keys_queue.append(direction)
+
+    def set_bomb_button(self, is_held):
+        self.bomb_button_held = bool(is_held)
+
+    def apply_action(self, action):
+        direction = None
+        bomb = False
+
+        if isinstance(action, str):
+            if action in self.DIRECTION_KEYS:
+                direction = action
+            elif action == "bomb":
+                bomb = True
+        elif isinstance(action, dict):
+            direction = action.get("move")
+            bomb = action.get("bomb", False)
+
+        self.set_direction_state(direction)
+        self.set_bomb_button(bomb)
     def update_position(self,collision_rects):
         # 记录移动前坐标
             old_x, old_y = self.rect.x, self.rect.y
